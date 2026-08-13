@@ -1,5 +1,8 @@
 import { useState } from "react";
+import { IconCheck } from "./icons";
 
+// Firebase auth error codes -> friendly copy. Falls back to a generic
+// message for anything not covered here (see err.code for the full list).
 const ERROR_MESSAGES = {
   "auth/invalid-email": "That email address doesn't look right.",
   "auth/user-not-found": "No account found with that email.",
@@ -14,6 +17,7 @@ export default function AuthScreen({ signIn, signUp }) {
   const [mode, setMode] = useState("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -23,9 +27,9 @@ export default function AuthScreen({ signIn, signUp }) {
     setBusy(true);
     try {
       if (mode === "signin") {
-        await signIn(email, password);
+        await signIn(email, password, rememberMe);
       } else {
-        await signUp(email, password);
+        await signUp(email, password, rememberMe);
       }
     } catch (err) {
       setError(ERROR_MESSAGES[err.code] || "Something went wrong. Try again.");
@@ -68,6 +72,17 @@ export default function AuthScreen({ signIn, signUp }) {
             minLength={6}
             required
           />
+        </div>
+
+        <div
+          className="remember-me-row"
+          onClick={() => setRememberMe((v) => !v)}
+          role="checkbox"
+          aria-checked={rememberMe}
+          tabIndex={0}
+        >
+          <div className={`checkbox${rememberMe ? " checked" : ""}`}>{rememberMe && <IconCheck />}</div>
+          <span>Remember me on this device</span>
         </div>
 
         {error && (

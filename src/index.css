@@ -755,6 +755,16 @@ input::placeholder, textarea::placeholder {
   font-size: 16px;
 }
 
+.remember-me-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
 .bw-row {
   display: flex;
   justify-content: space-between;

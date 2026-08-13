@@ -40,9 +40,8 @@ fully offline:
 
 Signing in (email/password, via Firebase Auth) also syncs each of these to
 Firestore under `users/{uid}/data/{sessions,bodyweight,fridayPicks}`, so the
-same account sees the same data on any device. Firestore config lives in
-`src/firebase.js`. Recommended Firestore security rules (Firestore console →
-Rules):
+same account sees the same data on any device. Recommended Firestore security
+rules (Firestore console → Rules):
 
 ```
 rules_version = '2';
@@ -55,6 +54,41 @@ service cloud.firestore {
 }
 ```
 
+## Authentication
+
+Built with the modular Firebase JS SDK (v9+):
+
+- **Config**: `src/firebase-config.js` exports the plain `firebaseConfig`
+  object (public client identifiers — access control comes from the
+  Firestore rules above, not from hiding this file). `src/firebase.js`
+  imports it, calls `initializeApp`, and exports the shared `auth` and `db`
+  instances everything else uses.
+- **Sign in / sign up**: `src/components/AuthScreen.jsx` — email + password
+  form with a "Remember me" checkbox, toggling between sign-in and sign-up
+  modes, with friendly messages for common `auth/*` error codes (wrong
+  password, user not found, email already in use, invalid email, weak
+  password, network error).
+- **Remember me**: `src/hooks/useAuth.js` calls `setPersistence()` with
+  either `browserLocalPersistence` (checked — session survives closing the
+  browser) or `browserSessionPersistence` (unchecked — session ends when the
+  tab closes), *before* calling `signInWithEmailAndPassword` /
+  `createUserWithEmailAndPassword`, since persistence only applies going
+  forward from that call.
+- **Session restore**: the same hook subscribes to `onAuthStateChanged` once
+  on mount, so a returning user with a persisted session lands straight in
+  the app instead of seeing the login screen (`src/App.jsx` shows a blank
+  shell while that initial check resolves, then renders `AuthScreen` or the
+  signed-in app).
+- **Sign out**: the account button in the top-right corner of the app calls
+  `signOut(auth)` (wired through `useAuth().signOut`).
+- **Firestore read/write example**: `src/firestoreExample.js` has two small,
+  standalone functions — `saveWorkoutEntry(docId, entry)` and
+  `getWorkoutEntry(docId)` — showing the plain one-shot `setDoc`/`getDoc`
+  pattern against `/users/{uid}/data/{docId}`. The app itself uses a fancier
+  real-time version of the same pattern in `src/hooks/useCloudState.js`
+  (adds `onSnapshot` listeners and an offline-first localStorage cache), but
+  `firestoreExample.js` is the plain version to copy from.
+
 ## Development
 
 ```bash
@@ -63,5 +97,12 @@ npm run dev      # local dev server
 npm run build    # production build to dist/
 npm run preview  # preview the production build
 ```
+
+To point the app at your own Firebase project instead: create one at
+[console.firebase.google.com](https://console.firebase.google.com), enable
+Firestore + the Email/Password sign-in provider under Authentication, then
+replace the object in `src/firebase-config.js` with your project's config
+(Project settings → General → Your apps) and publish the security rules
+above under Firestore Database → Rules.
 
 Optimized for phone screens (max content width 560px) but works fine on desktop too.
