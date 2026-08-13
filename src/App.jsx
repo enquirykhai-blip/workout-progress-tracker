@@ -1,6 +1,7 @@
 import { useCallback, useState } from "react";
 import { useCloudState } from "./hooks/useCloudState";
 import { useAuth } from "./hooks/useAuth";
+import { useRestTimer } from "./hooks/useRestTimer";
 import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
@@ -8,6 +9,7 @@ import { todayISO } from "./utils/date";
 import BottomNav from "./components/BottomNav";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
+import RestTimerBar from "./components/RestTimerBar";
 import Today from "./screens/Today";
 import Progress from "./screens/Progress";
 import Weekly from "./screens/Weekly";
@@ -29,6 +31,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [fridayPicks, setFridayPicks] = useCloudState(STORAGE_KEYS.FRIDAY_PICKS, "fridayPicks", {}, uid);
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
+  const restTimer = useRestTimer();
 
   const showToast = useCallback((message) => {
     const id = makeId();
@@ -47,9 +50,10 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
+      restTimer.start(restTimer.defaultDuration);
       return wasPR;
     },
-    [sessions, setSessions, showToast]
+    [sessions, setSessions, showToast, restTimer]
   );
 
   const handleNotesChange = useCallback(
@@ -86,6 +90,18 @@ function WorkoutApp({ uid, email, onSignOut }) {
       {accountOpen && (
         <div className="account-popover">
           <div className="account-email">{email}</div>
+          <div className="account-section-label">Rest Timer</div>
+          <div className="chip-row" style={{ marginBottom: 14 }}>
+            {restTimer.presets.map((secs) => (
+              <button
+                key={secs}
+                className={`chip${restTimer.defaultDuration === secs ? " active" : ""}`}
+                onClick={() => restTimer.setDefaultDuration(secs)}
+              >
+                {secs}s
+              </button>
+            ))}
+          </div>
           <button className="btn btn-secondary btn-block" onClick={onSignOut}>
             Sign Out
           </button>
@@ -106,6 +122,12 @@ function WorkoutApp({ uid, email, onSignOut }) {
       {tab === "week" && <Weekly sessions={sessions} />}
       {tab === "bodyweight" && <BodyWeight entries={bodyWeight} onAdd={handleAddBodyWeight} />}
 
+      <RestTimerBar
+        active={restTimer.active}
+        remaining={restTimer.remaining}
+        addSeconds={restTimer.addSeconds}
+        skip={restTimer.skip}
+      />
       <BottomNav active={tab} onChange={setTab} />
     </div>
   );

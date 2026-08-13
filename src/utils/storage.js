@@ -2,6 +2,7 @@ export const STORAGE_KEYS = {
   SESSIONS: "wpt.sessions.v1",
   BODY_WEIGHT: "wpt.bodyweight.v1",
   FRIDAY_PICKS: "wpt.fridayPicks.v1",
+  REST_DURATION: "wpt.restDuration.v1",
 };
 
 export function loadFromStorage(key, fallback) {

@@ -192,6 +192,70 @@ input::placeholder, textarea::placeholder {
   pointer-events: none;
 }
 
+.rest-timer-bar {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(70px + var(--safe-bottom));
+  width: calc(100% - 24px);
+  max-width: 536px;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  z-index: 45;
+  overflow: hidden;
+  animation: sheet-in 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.rest-timer-progress {
+  height: 3px;
+  background: var(--accent);
+  transform-origin: left;
+  transition: transform 0.25s linear;
+}
+
+.rest-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+}
+
+.rest-timer-time {
+  flex: 1;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.rest-timer-adjust {
+  min-width: 48px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-pressed);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.rest-timer-skip {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-pressed);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
 .bottom-nav {
   position: fixed;
   left: 50%;
@@ -879,4 +943,13 @@ input::placeholder, textarea::placeholder {
   color: var(--text-secondary);
   margin-bottom: 10px;
   word-break: break-all;
+}
+
+.account-section-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
 }

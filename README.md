@@ -28,6 +28,11 @@ via Firebase (Firestore + email/password auth) when signed in.
 - **Jumaat Custom Picker** — a searchable sheet to choose which exercises make
   up Friday's full-body session, editable any time that day.
 - **Body Weight Log** — simple date + weight entries with a trend chart.
+- **Rest Timer** — auto-starts after logging any set (default 90s, configurable
+  in the account menu), with a floating bar showing the countdown, ±15s
+  adjustment, and a skip button.
+- **Install as an app** — installable on your phone's home screen (PWA), works
+  offline for the app shell once visited.
 
 ## Data & Sync
 
@@ -88,6 +93,27 @@ Built with the modular Firebase JS SDK (v9+):
   real-time version of the same pattern in `src/hooks/useCloudState.js`
   (adds `onSnapshot` listeners and an offline-first localStorage cache), but
   `firestoreExample.js` is the plain version to copy from.
+
+## Rest Timer
+
+`src/hooks/useRestTimer.js` drives a countdown off an absolute end timestamp
+(not a decrementing counter), so it stays accurate even if the tab is
+backgrounded. `App.jsx` starts it (using the saved default duration) every
+time a set is logged, regardless of whether it was a PR. The default duration
+(60/90/120/180s) is a per-device preference stored in `localStorage` under
+`wpt.restDuration.v1` — deliberately not synced to Firestore, since it's a
+device/UI setting rather than workout data. `src/components/RestTimerBar.jsx`
+renders the floating bar with ±15s adjustment and skip.
+
+## Installing as an App (PWA)
+
+Configured via `vite-plugin-pwa` in `vite.config.js` — generates a web app
+manifest and a service worker that precaches the built app shell, so the app
+opens (and shows already-synced data) even with no signal; Firebase calls
+still need real network. Icons live in `public/` (`pwa-192.png`, `pwa-512.png`,
+`pwa-maskable-512.png` for Android/desktop, `apple-touch-icon.png` for iOS).
+On mobile, open the deployed URL and use the browser's "Add to Home Screen" /
+"Install app" option.
 
 ## Development
 
