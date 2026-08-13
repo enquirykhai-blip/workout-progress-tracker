@@ -1,7 +1,8 @@
 # Workout Progress Tracker
 
 A mobile-first web app for tracking a 5-day workout split. Built with React + Vite,
-charts via Recharts, and all data stored locally in the browser (no backend, no login).
+charts via Recharts. Data is stored locally in the browser and synced across devices
+via Firebase (Firestore + email/password auth) when signed in.
 
 ## The Split
 
@@ -28,14 +29,31 @@ charts via Recharts, and all data stored locally in the browser (no backend, no 
   up Friday's full-body session, editable any time that day.
 - **Body Weight Log** — simple date + weight entries with a trend chart.
 
-## Data
+## Data & Sync
 
-Everything is stored in `localStorage` under the `wpt.*` keys — data lives on
-the device and is never sent anywhere:
+Everything is stored in `localStorage` under the `wpt.*` keys, so the app works
+fully offline:
 
 - `wpt.sessions.v1` — logged sets per exercise/date
 - `wpt.bodyweight.v1` — body weight entries
 - `wpt.fridayPicks.v1` — chosen exercises per Jumaat date
+
+Signing in (email/password, via Firebase Auth) also syncs each of these to
+Firestore under `users/{uid}/data/{sessions,bodyweight,fridayPicks}`, so the
+same account sees the same data on any device. Firestore config lives in
+`src/firebase.js`. Recommended Firestore security rules (Firestore console →
+Rules):
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/data/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}
+```
 
 ## Development
 

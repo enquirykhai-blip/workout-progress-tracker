@@ -1,22 +1,34 @@
 import { useCallback, useState } from "react";
-import { useLocalStorageState } from "./hooks/useLocalStorageState";
+import { useCloudState } from "./hooks/useCloudState";
+import { useAuth } from "./hooks/useAuth";
 import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
 import BottomNav from "./components/BottomNav";
 import PRToastLayer from "./components/PRToastLayer";
+import AuthScreen from "./components/AuthScreen";
 import Today from "./screens/Today";
 import Progress from "./screens/Progress";
 import Weekly from "./screens/Weekly";
 import BodyWeight from "./screens/BodyWeight";
 
 export default function App() {
+  const { user, loading, signIn, signUp, signOut } = useAuth();
+
+  if (loading) return <div className="app-shell" />;
+  if (!user) return <AuthScreen signIn={signIn} signUp={signUp} />;
+
+  return <WorkoutApp uid={user.uid} email={user.email} onSignOut={signOut} />;
+}
+
+function WorkoutApp({ uid, email, onSignOut }) {
   const [tab, setTab] = useState("today");
-  const [sessions, setSessions] = useLocalStorageState(STORAGE_KEYS.SESSIONS, []);
-  const [bodyWeight, setBodyWeight] = useLocalStorageState(STORAGE_KEYS.BODY_WEIGHT, []);
-  const [fridayPicks, setFridayPicks] = useLocalStorageState(STORAGE_KEYS.FRIDAY_PICKS, {});
+  const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
+  const [bodyWeight, setBodyWeight] = useCloudState(STORAGE_KEYS.BODY_WEIGHT, "bodyweight", [], uid);
+  const [fridayPicks, setFridayPicks] = useCloudState(STORAGE_KEYS.FRIDAY_PICKS, "fridayPicks", {}, uid);
   const [toasts, setToasts] = useState([]);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   const showToast = useCallback((message) => {
     const id = makeId();
@@ -64,6 +76,18 @@ export default function App() {
   return (
     <div className="app-shell">
       <PRToastLayer toasts={toasts} />
+
+      <button className="account-fab" onClick={() => setAccountOpen((v) => !v)} aria-label="Account">
+        {email?.[0]?.toUpperCase() || "?"}
+      </button>
+      {accountOpen && (
+        <div className="account-popover">
+          <div className="account-email">{email}</div>
+          <button className="btn btn-secondary btn-block" onClick={onSignOut}>
+            Sign Out
+          </button>
+        </div>
+      )}
 
       {tab === "today" && (
         <Today
