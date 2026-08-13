@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { IconCheck, IconPlus } from "./icons";
-import { findSession, getBestSet } from "../utils/sessionOps";
+import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
 
 function buildInitialRows({ exercise, target, date, day, sessions }) {
   const existing = findSession(sessions, date, exercise.id);
@@ -18,19 +18,28 @@ function buildInitialRows({ exercise, target, date, day, sessions }) {
     if (loggedSet) {
       return {
         setNumber,
-        weight: String(loggedSet.weight ?? ""),
-        reps: String(loggedSet.reps ?? ""),
-        saved: { weight: loggedSet.weight, reps: loggedSet.reps },
+        weight: loggedSet.weight != null ? String(loggedSet.weight) : "",
+        reps: loggedSet.reps != null ? String(loggedSet.reps) : "",
+        saved: { weight: loggedSet.weight ?? null, reps: loggedSet.reps ?? null },
       };
     }
     const prior = priorSets.find((s) => s.setNumber === setNumber) || priorSets[priorSets.length - 1];
     return {
       setNumber,
-      weight: prior ? String(prior.weight) : "",
-      reps: prior ? String(prior.reps) : "",
+      weight: prior?.weight != null ? String(prior.weight) : "",
+      reps: prior?.reps != null ? String(prior.reps) : "",
       saved: null,
     };
   });
+}
+
+// True when the row's current text inputs match what was last saved for it —
+// blank input <-> a null (not logged) value on either side.
+function matchesSaved(row) {
+  if (!row.saved) return false;
+  const savedWeightStr = row.saved.weight == null ? "" : String(row.saved.weight);
+  const savedRepsStr = row.saved.reps == null ? "" : String(row.saved.reps);
+  return savedWeightStr === row.weight && savedRepsStr === row.reps;
 }
 
 export default function ExerciseLogCard({ exercise, target, date, day, sessions, onLogSet, onNotesChange }) {
@@ -41,16 +50,21 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
   const [prRowIndex, setPrRowIndex] = useState(null);
 
   const best = getBestSet(sessions, exercise.id, date);
+  const bestRepsOnly = getBestRepsOnlySet(sessions, exercise.id, date);
 
   function updateRow(index, patch) {
     setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
   }
 
+  // Weight and reps are each optional — log with just one filled in
+  // (bodyweight exercises need only reps; some sets only need weight noted).
   function handleSave(index) {
     const row = rows[index];
-    const weight = parseFloat(row.weight);
-    const reps = parseInt(row.reps, 10);
-    if (Number.isNaN(weight) || Number.isNaN(reps) || weight < 0 || reps < 0) return;
+    const weight = row.weight === "" ? null : parseFloat(row.weight);
+    const reps = row.reps === "" ? null : parseInt(row.reps, 10);
+    if (weight == null && reps == null) return;
+    if (weight != null && (Number.isNaN(weight) || weight < 0)) return;
+    if (reps != null && (Number.isNaN(reps) || reps < 0)) return;
 
     const isPR = onLogSet(row.setNumber, weight, reps);
     updateRow(index, { saved: { weight, reps } });
@@ -81,16 +95,20 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
             {target.sets} × {target.repRange}
           </div>
         </div>
-        {best && (
+        {best ? (
           <div className="exercise-best">
-            Best {best.weight}kg × {best.reps}
+            Best {best.weight}kg{best.reps > 0 ? ` × ${best.reps}` : ""}
           </div>
+        ) : (
+          bestRepsOnly && <div className="exercise-best">Best {bestRepsOnly.reps} reps</div>
         )}
       </div>
 
+      <p className="exercise-hint">Weight and reps are both optional — log either one, or both.</p>
+
       <div className="set-rows">
         {rows.map((row, i) => {
-          const isSaved = row.saved && String(row.saved.weight) === row.weight && String(row.saved.reps) === row.reps;
+          const isSaved = matchesSaved(row);
           return (
             <div className="set-row" key={row.setNumber}>
               <div className="set-index">{row.setNumber}</div>
@@ -98,7 +116,7 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
                 <input
                   type="text"
                   inputMode="decimal"
-                  placeholder="0"
+                  placeholder="—"
                   value={row.weight}
                   onChange={(e) => updateRow(i, { weight: e.target.value.replace(/[^0-9.]/g, "") })}
                 />
@@ -108,7 +126,7 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
                 <input
                   type="text"
                   inputMode="numeric"
-                  placeholder="0"
+                  placeholder="—"
                   value={row.reps}
                   onChange={(e) => updateRow(i, { reps: e.target.value.replace(/[^0-9]/g, "") })}
                 />
@@ -117,7 +135,7 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
               <button
                 className={`set-log-btn${isSaved ? " done" : ""}${prRowIndex === i ? " pr" : ""}`}
                 onClick={() => handleSave(i)}
-                disabled={row.weight === "" || row.reps === ""}
+                disabled={row.weight === "" && row.reps === ""}
                 aria-label={`Log set ${row.setNumber}`}
               >
                 <IconCheck />

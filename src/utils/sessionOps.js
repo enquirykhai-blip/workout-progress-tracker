@@ -1,20 +1,41 @@
 import { makeId } from "./id";
 
-// Returns { weight, reps } of the best set logged for an exercise before a given date
-// (or across all history if beforeDate is omitted). "Best" = highest weight, tie-broken by reps.
+// Sets can log weight only, reps only, or both — whichever the user actually
+// wants to key in. "Best" is tracked in two separate lanes since they aren't
+// comparable: a weighted best (by weight, tie-broken by reps) for sets that
+// have a weight, and a reps-only best (by reps) for bodyweight-style sets
+// logged with no weight.
+
+// Returns { weight, reps, date } of the best *weighted* set logged for an
+// exercise before a given date (or across all history if beforeDate is
+// omitted). Ignores reps-only sets (weight == null).
 export function getBestSet(sessions, exerciseId, beforeDate) {
   let best = null;
   for (const session of sessions) {
     if (session.exerciseId !== exerciseId) continue;
     if (beforeDate && session.date >= beforeDate) continue;
     for (const set of session.sets) {
-      if (set.weight == null || set.reps == null) continue;
-      if (
-        !best ||
-        set.weight > best.weight ||
-        (set.weight === best.weight && set.reps > best.reps)
-      ) {
-        best = { weight: set.weight, reps: set.reps, date: session.date };
+      if (set.weight == null) continue;
+      const reps = set.reps ?? 0;
+      if (!best || set.weight > best.weight || (set.weight === best.weight && reps > best.reps)) {
+        best = { weight: set.weight, reps, date: session.date };
+      }
+    }
+  }
+  return best;
+}
+
+// Returns { reps, date } of the best reps-only (no weight) set logged for an
+// exercise before a given date, or across all history if beforeDate is omitted.
+export function getBestRepsOnlySet(sessions, exerciseId, beforeDate) {
+  let best = null;
+  for (const session of sessions) {
+    if (session.exerciseId !== exerciseId) continue;
+    if (beforeDate && session.date >= beforeDate) continue;
+    for (const set of session.sets) {
+      if (set.weight != null || set.reps == null) continue;
+      if (!best || set.reps > best.reps) {
+        best = { reps: set.reps, date: session.date };
       }
     }
   }
@@ -22,11 +43,18 @@ export function getBestSet(sessions, exerciseId, beforeDate) {
 }
 
 export function isPR(sessions, exerciseId, date, weight, reps) {
-  const best = getBestSet(sessions, exerciseId, date);
-  if (!best) return weight > 0;
-  if (weight > best.weight) return true;
-  if (weight === best.weight && reps > best.reps) return true;
-  return false;
+  if (weight != null) {
+    const best = getBestSet(sessions, exerciseId, date);
+    if (!best) return weight > 0;
+    const r = reps ?? 0;
+    if (weight > best.weight) return true;
+    if (weight === best.weight && r > best.reps) return true;
+    return false;
+  }
+  // Reps-only set (no weight logged) — compare against other reps-only sets.
+  const best = getBestRepsOnlySet(sessions, exerciseId, date);
+  if (!best) return reps > 0;
+  return reps > best.reps;
 }
 
 export function findSession(sessions, date, exerciseId) {
@@ -78,8 +106,19 @@ export function sessionsForExercise(sessions, exerciseId) {
     .sort((a, b) => (a.date < b.date ? 1 : -1));
 }
 
+// Highest weight logged in a session, or null if every set in it was
+// reps-only (no weight logged at all) — distinct from an actual 0kg set.
 export function maxWeightInSession(session) {
-  return session.sets.reduce((max, s) => Math.max(max, s.weight || 0), 0);
+  const weighted = session.sets.filter((s) => s.weight != null);
+  if (weighted.length === 0) return null;
+  return weighted.reduce((max, s) => Math.max(max, s.weight), 0);
+}
+
+// Highest reps logged in a session among reps-only (no weight) sets, or null.
+export function maxRepsOnlyInSession(session) {
+  const repsOnly = session.sets.filter((s) => s.weight == null && s.reps != null);
+  if (repsOnly.length === 0) return null;
+  return repsOnly.reduce((max, s) => Math.max(max, s.reps), 0);
 }
 
 export function datesWithSessions(sessions) {

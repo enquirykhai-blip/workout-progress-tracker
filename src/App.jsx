@@ -43,7 +43,10 @@ function WorkoutApp({ uid, email, onSignOut }) {
       const iso = todayISO();
       const wasPR = isPR(sessions, exercise.id, iso, weight, reps);
       setSessions((prev) => upsertSet(prev, { date: iso, day, exerciseId: exercise.id, setNumber, weight, reps }));
-      if (wasPR) showToast(`New PR — ${exercise.name}: ${weight}kg × ${reps}`);
+      if (wasPR) {
+        const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
+        showToast(`New PR — ${exercise.name}: ${detail}`);
+      }
       return wasPR;
     },
     [sessions, setSessions, showToast]

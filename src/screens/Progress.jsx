@@ -1,11 +1,17 @@
 import { useMemo, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { EXERCISES } from "../data/exercises";
-import { sessionsForExercise, maxWeightInSession, getBestSet } from "../utils/sessionOps";
+import {
+  sessionsForExercise,
+  maxWeightInSession,
+  maxRepsOnlyInSession,
+  getBestSet,
+  getBestRepsOnlySet,
+} from "../utils/sessionOps";
 import { formatShortDate, formatDisplayDate } from "../utils/date";
 import { IconSearch } from "../components/icons";
 
-function ChartTooltip({ active, payload, label }) {
+function ChartTooltip({ active, payload, label, unit }) {
   if (!active || !payload?.length) return null;
   return (
     <div
@@ -18,9 +24,19 @@ function ChartTooltip({ active, payload, label }) {
       }}
     >
       <div style={{ color: "var(--text-secondary)", marginBottom: 2 }}>{label}</div>
-      <div style={{ fontWeight: 700, color: "var(--text)" }}>{payload[0].value} kg</div>
+      <div style={{ fontWeight: 700, color: "var(--text)" }}>
+        {payload[0].value} {unit}
+      </div>
     </div>
   );
+}
+
+// One set's weight/reps as compact display text — either value can be absent.
+function formatSet(set) {
+  if (set.weight != null && set.reps != null) return `${set.weight}kg × ${set.reps}`;
+  if (set.weight != null) return `${set.weight}kg`;
+  if (set.reps != null) return `${set.reps} reps`;
+  return "—";
 }
 
 export default function Progress({ sessions }) {
@@ -46,11 +62,19 @@ export default function Progress({ sessions }) {
   const selected = EXERCISES.find((e) => e.id === selectedId);
   const history = selected ? sessionsForExercise(sessions, selected.id) : [];
   const best = selected ? getBestSet(sessions, selected.id) : null;
+  const bestRepsOnly = selected ? getBestRepsOnlySet(sessions, selected.id) : null;
 
+  // Chart weight over time when there's any weighted data for this exercise;
+  // otherwise (pure bodyweight exercise) chart reps over time instead.
+  const chartMode = history.some((s) => maxWeightInSession(s) != null) ? "weight" : "reps";
   const chartData = history
     .slice()
     .sort((a, b) => (a.date < b.date ? -1 : 1))
-    .map((s) => ({ date: formatShortDate(s.date), weight: maxWeightInSession(s) }));
+    .map((s) => ({
+      date: formatShortDate(s.date),
+      value: chartMode === "weight" ? maxWeightInSession(s) : maxRepsOnlyInSession(s),
+    }))
+    .filter((d) => d.value != null);
 
   return (
     <div className="screen">
@@ -123,10 +147,12 @@ export default function Progress({ sessions }) {
                 <div className="exercise-name">{selected.name}</div>
                 <div className="exercise-target">{history.length} session{history.length === 1 ? "" : "s"} logged</div>
               </div>
-              {best && (
+              {best ? (
                 <div className="exercise-best">
-                  PR {best.weight}kg × {best.reps}
+                  PR {best.weight}kg{best.reps > 0 ? ` × ${best.reps}` : ""}
                 </div>
+              ) : (
+                bestRepsOnly && <div className="exercise-best">PR {bestRepsOnly.reps} reps</div>
               )}
             </div>
           </div>
@@ -150,10 +176,10 @@ export default function Progress({ sessions }) {
                     axisLine={false}
                     width={34}
                   />
-                  <Tooltip content={<ChartTooltip />} />
+                  <Tooltip content={<ChartTooltip unit={chartMode === "weight" ? "kg" : "reps"} />} />
                   <Line
                     type="monotone"
-                    dataKey="weight"
+                    dataKey="value"
                     stroke="var(--accent)"
                     strokeWidth={2.5}
                     dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }}
@@ -176,17 +202,18 @@ export default function Progress({ sessions }) {
                 <thead>
                   <tr>
                     <th>Date</th>
-                    <th>Sets (kg × reps)</th>
+                    <th>Sets</th>
                   </tr>
                 </thead>
                 <tbody>
                   {history.map((s) => {
-                    const top = maxWeightInSession(s);
-                    const isPRRow = best && top === best.weight && s.date === best.date;
+                    const isPRRow =
+                      (best && s.date === best.date && maxWeightInSession(s) === best.weight) ||
+                      (bestRepsOnly && s.date === bestRepsOnly.date && maxRepsOnlyInSession(s) === bestRepsOnly.reps);
                     return (
                       <tr key={s.id} className={isPRRow ? "history-row-pr" : ""}>
                         <td>{formatDisplayDate(s.date)}</td>
-                        <td>{s.sets.map((set) => `${set.weight}×${set.reps}`).join(", ")}</td>
+                        <td>{s.sets.map(formatSet).join(", ")}</td>
                       </tr>
                     );
                   })}

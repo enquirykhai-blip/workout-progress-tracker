@@ -334,6 +334,12 @@ input::placeholder, textarea::placeholder {
   margin-left: 10px;
 }
 
+.exercise-hint {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+}
+
 .set-rows {
   margin-top: 14px;
   display: flex;
