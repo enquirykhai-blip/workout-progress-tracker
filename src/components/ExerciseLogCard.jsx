@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { IconCheck, IconPlus } from "./icons";
+import { IconCheck, IconPlus, IconClose } from "./icons";
 import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
 
 function buildInitialRows({ exercise, target, date, day, sessions }) {
@@ -42,7 +42,7 @@ function matchesSaved(row) {
   return savedWeightStr === row.weight && savedRepsStr === row.reps;
 }
 
-export default function ExerciseLogCard({ exercise, target, date, day, sessions, onLogSet, onNotesChange }) {
+export default function ExerciseLogCard({ exercise, target, date, day, sessions, onLogSet, onDeleteSet, onNotesChange }) {
   const [rows, setRows] = useState(() => buildInitialRows({ exercise, target, date, day, sessions }));
   const existing = findSession(sessions, date, exercise.id);
   const [noteOpen, setNoteOpen] = useState(Boolean(existing?.notes));
@@ -72,6 +72,16 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
       setPrRowIndex(index);
       setTimeout(() => setPrRowIndex((cur) => (cur === index ? null : cur)), 550);
     }
+  }
+
+  // Only rows that are actually persisted (row.saved set) have anything to
+  // delete — an unfilled or not-yet-saved row is just local UI state that
+  // disappears on its own if left blank, no confirmation needed either way
+  // since it's a single set, not the whole log.
+  function handleDelete(index) {
+    const row = rows[index];
+    onDeleteSet(row.setNumber);
+    setRows((prev) => prev.filter((_, i) => i !== index).map((r, i) => ({ ...r, setNumber: i + 1 })));
   }
 
   function handleAddSet() {
@@ -110,7 +120,7 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
         {rows.map((row, i) => {
           const isSaved = matchesSaved(row);
           return (
-            <div className="set-row" key={row.setNumber}>
+            <div className={`set-row${row.saved ? " has-delete" : ""}`} key={row.setNumber}>
               <div className="set-index">{row.setNumber}</div>
               <div className="set-field">
                 <input
@@ -140,6 +150,11 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
               >
                 <IconCheck />
               </button>
+              {row.saved && (
+                <button className="set-delete-btn" onClick={() => handleDelete(i)} aria-label={`Delete set ${row.setNumber}`}>
+                  <IconClose width={14} height={14} />
+                </button>
+              )}
             </div>
           );
         })}

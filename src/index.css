@@ -418,6 +418,10 @@ input::placeholder, textarea::placeholder {
   align-items: center;
 }
 
+.set-row.has-delete {
+  grid-template-columns: 28px 1fr 1fr 44px 32px;
+}
+
 .set-index {
   font-size: 13px;
   font-weight: 600;
@@ -489,6 +493,20 @@ input::placeholder, textarea::placeholder {
 .set-log-btn:disabled {
   opacity: 0.35;
   pointer-events: none;
+}
+
+.set-delete-btn {
+  width: 32px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  transition: color 0.15s ease;
+}
+
+.set-delete-btn:active {
+  color: var(--accent);
 }
 
 .add-set-row {

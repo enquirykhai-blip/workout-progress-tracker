@@ -3,7 +3,7 @@ import { useCloudState } from "./hooks/useCloudState";
 import { useAuth } from "./hooks/useAuth";
 import { useRestTimer } from "./hooks/useRestTimer";
 import { STORAGE_KEYS } from "./utils/storage";
-import { upsertSet, updateNotes, isPR } from "./utils/sessionOps";
+import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
 import BottomNav from "./components/BottomNav";
@@ -54,6 +54,18 @@ function WorkoutApp({ uid, email, onSignOut }) {
       return wasPR;
     },
     [sessions, setSessions, showToast, restTimer]
+  );
+
+  const handleDeleteSet = useCallback(
+    (exercise, setNumber) => {
+      const iso = todayISO();
+      setSessions((prev) => {
+        const session = findSession(prev, iso, exercise.id);
+        if (!session) return prev;
+        return removeSet(prev, session.id, setNumber);
+      });
+    },
+    [setSessions]
   );
 
   const handleNotesChange = useCallback(
@@ -112,6 +124,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
         <Today
           sessions={sessions}
           onLogSet={handleLogSet}
+          onDeleteSet={handleDeleteSet}
           onNotesChange={handleNotesChange}
           fridayPicks={fridayPicks}
           onSaveFridayPicks={handleSaveFridayPicks}

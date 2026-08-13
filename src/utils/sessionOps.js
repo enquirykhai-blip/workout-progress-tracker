@@ -81,11 +81,18 @@ export function upsertSet(sessions, { date, day, exerciseId, setNumber, weight, 
   return sessions.map((s) => (s.id === existing.id ? { ...s, sets } : s));
 }
 
+// Removes a set and renumbers the remaining ones sequentially (1, 2, 3, ...)
+// so they stay aligned with the setNumber-indexed rows in the log UI. Drops
+// the whole session if that was its last set.
 export function removeSet(sessions, sessionId, setNumber) {
   return sessions
     .map((s) => {
       if (s.id !== sessionId) return s;
-      return { ...s, sets: s.sets.filter((set) => set.setNumber !== setNumber) };
+      const remaining = s.sets
+        .filter((set) => set.setNumber !== setNumber)
+        .sort((a, b) => a.setNumber - b.setNumber)
+        .map((set, i) => ({ ...set, setNumber: i + 1 }));
+      return { ...s, sets: remaining };
     })
     .filter((s) => s.sets.length > 0);
 }

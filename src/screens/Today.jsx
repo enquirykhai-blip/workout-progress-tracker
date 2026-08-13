@@ -5,7 +5,7 @@ import ExerciseLogCard from "../components/ExerciseLogCard";
 import FridayPicker from "../components/FridayPicker";
 import { IconPlus } from "../components/icons";
 
-export default function Today({ sessions, onLogSet, onNotesChange, fridayPicks, onSaveFridayPicks, onGoToBodyWeight }) {
+export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, fridayPicks, onSaveFridayPicks, onGoToBodyWeight }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date());
@@ -68,6 +68,7 @@ export default function Today({ sessions, onLogSet, onNotesChange, fridayPicks, 
           day={dayInfo.key}
           sessions={sessions}
           onLogSet={(setNumber, weight, reps) => onLogSet(exercise, dayInfo.key, setNumber, weight, reps)}
+          onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
           onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
         />
       ))}
