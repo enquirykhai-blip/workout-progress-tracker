@@ -378,9 +378,24 @@ input::placeholder, textarea::placeholder {
 }
 
 .exercise-name {
+  display: flex;
+  align-items: center;
+  gap: 7px;
   font-size: 17px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+.exercise-done-badge {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .exercise-target {
@@ -395,12 +410,6 @@ input::placeholder, textarea::placeholder {
   font-weight: 600;
   white-space: nowrap;
   margin-left: 10px;
-}
-
-.exercise-hint {
-  font-size: 12px;
-  color: var(--text-tertiary);
-  margin-top: 2px;
 }
 
 .set-rows {

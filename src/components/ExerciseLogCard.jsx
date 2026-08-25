@@ -42,7 +42,7 @@ function matchesSaved(row) {
   return savedWeightStr === row.weight && savedRepsStr === row.reps;
 }
 
-export default function ExerciseLogCard({ exercise, target, date, day, sessions, onLogSet, onDeleteSet, onNotesChange }) {
+export default function ExerciseLogCard({ exercise, target, date, day, sessions, done, onLogSet, onDeleteSet, onNotesChange }) {
   const [rows, setRows] = useState(() => buildInitialRows({ exercise, target, date, day, sessions }));
   const existing = findSession(sessions, date, exercise.id);
   const [noteOpen, setNoteOpen] = useState(Boolean(existing?.notes));
@@ -100,7 +100,14 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
     <div className="card exercise-card">
       <div className="exercise-card-head">
         <div>
-          <div className="exercise-name">{exercise.name}</div>
+          <div className="exercise-name">
+            {exercise.name}
+            {done && (
+              <span className="exercise-done-badge">
+                <IconCheck width={11} height={11} />
+              </span>
+            )}
+          </div>
           <div className="exercise-target">
             {target.sets} × {target.repRange}
           </div>
@@ -113,8 +120,6 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
           bestRepsOnly && <div className="exercise-best">Best {bestRepsOnly.reps} reps</div>
         )}
       </div>
-
-      <p className="exercise-hint">Weight and reps are both optional — log either one, or both.</p>
 
       <div className="set-rows">
         {rows.map((row, i) => {

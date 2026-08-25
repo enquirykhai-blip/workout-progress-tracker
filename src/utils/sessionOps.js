@@ -106,28 +106,6 @@ export function updateNotes(sessions, date, exerciseId, day, notes) {
   return sessions.map((s) => (s.id === existing.id ? { ...s, notes } : s));
 }
 
-export function sessionsForExercise(sessions, exerciseId) {
-  return sessions
-    .filter((s) => s.exerciseId === exerciseId && s.sets.length > 0)
-    .slice()
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
-}
-
-// Highest weight logged in a session, or null if every set in it was
-// reps-only (no weight logged at all) — distinct from an actual 0kg set.
-export function maxWeightInSession(session) {
-  const weighted = session.sets.filter((s) => s.weight != null);
-  if (weighted.length === 0) return null;
-  return weighted.reduce((max, s) => Math.max(max, s.weight), 0);
-}
-
-// Highest reps logged in a session among reps-only (no weight) sets, or null.
-export function maxRepsOnlyInSession(session) {
-  const repsOnly = session.sets.filter((s) => s.weight == null && s.reps != null);
-  if (repsOnly.length === 0) return null;
-  return repsOnly.reduce((max, s) => Math.max(max, s.reps), 0);
-}
-
 export function datesWithSessions(sessions) {
   return new Set(sessions.filter((s) => s.sets.length > 0).map((s) => s.date));
 }

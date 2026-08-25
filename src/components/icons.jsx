@@ -16,29 +16,11 @@ export function IconToday(props) {
   );
 }
 
-export function IconChart(props) {
-  return (
-    <svg {...common} {...props}>
-      <path d="M4 19V5M4 19h16" />
-      <path d="M8 16v-4M12.5 16V8M17 16v-7" />
-    </svg>
-  );
-}
-
 export function IconCalendar(props) {
   return (
     <svg {...common} {...props}>
       <rect x="4" y="5" width="16" height="15" rx="2" />
       <path d="M4 10h16M8 3v3M16 3v3" />
-    </svg>
-  );
-}
-
-export function IconScale(props) {
-  return (
-    <svg {...common} {...props}>
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="M12 8.2c-1.7 1.5-2.6 3-2.6 3.9a2.6 2.6 0 0 0 5.2 0c0-.9-.9-2.4-2.6-3.9Z" />
     </svg>
   );
 }

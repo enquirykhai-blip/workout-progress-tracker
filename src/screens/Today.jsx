@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { PROGRAM, EXERCISE_MAP, defaultTargetFor } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
+import { findSession } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
 import FridayPicker from "../components/FridayPicker";
 import { IconPlus } from "../components/icons";
 
-export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, fridayPicks, onSaveFridayPicks, onGoToBodyWeight }) {
+export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, fridayPicks, onSaveFridayPicks, onGoToNutrition }) {
   const [pickerOpen, setPickerOpen] = useState(false);
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date());
@@ -21,12 +22,21 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
       ? picksForToday.map((id) => ({ exercise: EXERCISE_MAP[id], target: defaultTargetFor(id) }))
       : [];
 
+  const isExerciseDone = (exercise, target) => {
+    const session = findSession(sessions, date, exercise.id);
+    return Boolean(session && session.sets.length >= target.sets);
+  };
+  const doneCount = items.filter(({ exercise, target }) => isExerciseDone(exercise, target)).length;
+
   return (
     <div className="screen">
       <div className="screen-header">
         <div className="eyebrow">{dayInfo.label}</div>
         <h1 className="title-xl">{dayInfo.type === "rest" ? "Rest Day" : dayInfo.focus}</h1>
-        <p className="subtitle">{formatDisplayDate(date)}</p>
+        <p className="subtitle">
+          {formatDisplayDate(date)}
+          {items.length > 0 && ` · ${doneCount}/${items.length} exercises done`}
+        </p>
       </div>
 
       {dayInfo.type === "rest" && (
@@ -36,10 +46,10 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           <p>
             No lifting scheduled for {dayInfo.label}. Rest, hydrate, and let the muscle grow.
             <br />
-            You can still log your body weight below.
+            You can still log what you're eating below.
           </p>
-          <button className="btn btn-secondary" style={{ marginTop: 20 }} onClick={onGoToBodyWeight}>
-            Log Body Weight
+          <button className="btn btn-secondary" style={{ marginTop: 20 }} onClick={onGoToNutrition}>
+            Log Today's Meals
           </button>
         </div>
       )}
@@ -67,6 +77,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           date={date}
           day={dayInfo.key}
           sessions={sessions}
+          done={isExerciseDone(exercise, target)}
           onLogSet={(setNumber, weight, reps) => onLogSet(exercise, dayInfo.key, setNumber, weight, reps)}
           onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
           onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}

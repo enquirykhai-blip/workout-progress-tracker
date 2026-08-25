@@ -11,9 +11,7 @@ import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
 import RestTimerBar from "./components/RestTimerBar";
 import Today from "./screens/Today";
-import Progress from "./screens/Progress";
 import Weekly from "./screens/Weekly";
-import BodyWeight from "./screens/BodyWeight";
 import Nutrition from "./screens/Nutrition";
 
 export default function App() {
@@ -28,7 +26,6 @@ export default function App() {
 function WorkoutApp({ uid, email, onSignOut }) {
   const [tab, setTab] = useState("today");
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
-  const [bodyWeight, setBodyWeight] = useCloudState(STORAGE_KEYS.BODY_WEIGHT, "bodyweight", [], uid);
   const [fridayPicks, setFridayPicks] = useCloudState(STORAGE_KEYS.FRIDAY_PICKS, "fridayPicks", {}, uid);
   const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
   const [nutritionTargets, setNutritionTargets] = useCloudState(
@@ -90,16 +87,6 @@ function WorkoutApp({ uid, email, onSignOut }) {
     [setFridayPicks]
   );
 
-  const handleAddBodyWeight = useCallback(
-    (entry) => {
-      setBodyWeight((prev) => {
-        const withoutSameDate = prev.filter((e) => e.date !== entry.date);
-        return [...withoutSameDate, entry];
-      });
-    },
-    [setBodyWeight]
-  );
-
   const handleAddNutritionEntry = useCallback(
     (entry) => {
       setNutrition((prev) => [...prev, entry]);
@@ -150,10 +137,9 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onNotesChange={handleNotesChange}
           fridayPicks={fridayPicks}
           onSaveFridayPicks={handleSaveFridayPicks}
-          onGoToBodyWeight={() => setTab("bodyweight")}
+          onGoToNutrition={() => setTab("nutrition")}
         />
       )}
-      {tab === "progress" && <Progress sessions={sessions} />}
       {tab === "week" && <Weekly sessions={sessions} />}
       {tab === "nutrition" && (
         <Nutrition
@@ -164,7 +150,6 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onUpdateTargets={setNutritionTargets}
         />
       )}
-      {tab === "bodyweight" && <BodyWeight entries={bodyWeight} onAdd={handleAddBodyWeight} />}
 
       <RestTimerBar
         active={restTimer.active}

@@ -17,17 +17,23 @@ via Firebase (Firestore + email/password auth) when signed in.
 
 ## Features
 
-- **Today's Workout** — auto-detects the day and shows that day's exercises with
-  fast, thumb-friendly weight/reps logging (numeric keypad, large tap targets).
+The app has three tabs: **Today** (workout), **Week** (a 7-day overview), and
+**Food** (macro tracking) — nutrition is a first-class part of the app, not
+an afterthought, alongside the workout split.
+
+- **Today's Workout** — auto-detects the day and shows that day's exercises
+  with fast, thumb-friendly weight/reps logging (numeric keypad, large tap
+  targets). The header shows a live "X/Y exercises done" count for the day,
+  and any exercise whose full set of prescribed sets is logged gets a small
+  checkmark badge next to its name — so scanning the list tells you at a
+  glance what's left, without reading every row.
 - **Personal Records** — logging a set that beats your previous best weight/reps
-  for that exercise triggers a PR toast with a subtle celebration animation.
-- **Progress** — search any exercise to see its full session history in a table
-  plus a weight-over-time line chart.
+  for that exercise triggers a PR toast with a subtle celebration animation,
+  and the exercise card shows your current best inline.
 - **Weekly Overview** — a 7-day grid showing which workout days were completed
   vs missed this week, with prev/next week navigation.
 - **Jumaat Custom Picker** — a searchable sheet to choose which exercises make
   up Friday's full-body session, editable any time that day.
-- **Body Weight Log** — simple date + weight entries with a trend chart.
 - **Rest Timer** — auto-starts after logging any set (default 90s, configurable
   in the account menu), with a floating bar showing the countdown, ±15s
   adjustment, and a skip button.
@@ -35,8 +41,11 @@ via Firebase (Firestore + email/password auth) when signed in.
   offline for the app shell once visited.
 - **Delete a set** — a × next to any already-logged set removes it and
   renumbers the rest, for fixing a mis-log without editing storage by hand.
-- **Nutrition** — log calories, protein, carbs, fat, and fiber per entry
-  (multiple a day, grouped by meal — Breakfast/Lunch/Dinner/Snack), see
+- **Rest day** — instead of a workout list, shows a recovery message and a
+  "Log Today's Meals" shortcut straight into the Food tab, since macro
+  tracking doesn't take a day off.
+- **Nutrition (Food tab)** — log calories, protein, carbs, fat, and fiber per
+  entry (multiple a day, grouped by meal — Breakfast/Lunch/Dinner/Snack), see
   today's totals against daily targets as a calorie ring plus four macro
   pills, and view calorie/protein trend charts over time.
 - **Scan Food or Label, or just describe it** — take/upload a photo of
@@ -53,15 +62,14 @@ Everything is stored in `localStorage` under the `wpt.*` keys, so the app works
 fully offline:
 
 - `wpt.sessions.v1` — logged sets per exercise/date
-- `wpt.bodyweight.v1` — body weight entries
 - `wpt.fridayPicks.v1` — chosen exercises per Jumaat date
 - `wpt.nutrition.v1` — logged calorie/protein entries
 - `wpt.nutritionTargets.v1` — daily calorie/protein goals
 
 Signing in (email/password, via Firebase Auth) also syncs each of these to
-Firestore under `users/{uid}/data/{sessions,bodyweight,fridayPicks}`, so the
-same account sees the same data on any device. Recommended Firestore security
-rules (Firestore console → Rules):
+Firestore under `users/{uid}/data/{sessions,fridayPicks,nutrition,nutritionTargets}`,
+so the same account sees the same data on any device. Recommended Firestore
+security rules (Firestore console → Rules):
 
 ```
 rules_version = '2';
