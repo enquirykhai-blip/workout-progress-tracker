@@ -14,6 +14,7 @@ import Today from "./screens/Today";
 import Progress from "./screens/Progress";
 import Weekly from "./screens/Weekly";
 import BodyWeight from "./screens/BodyWeight";
+import Nutrition from "./screens/Nutrition";
 
 export default function App() {
   const { user, loading, signIn, signUp, signOut } = useAuth();
@@ -29,6 +30,13 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
   const [bodyWeight, setBodyWeight] = useCloudState(STORAGE_KEYS.BODY_WEIGHT, "bodyweight", [], uid);
   const [fridayPicks, setFridayPicks] = useCloudState(STORAGE_KEYS.FRIDAY_PICKS, "fridayPicks", {}, uid);
+  const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
+  const [nutritionTargets, setNutritionTargets] = useCloudState(
+    STORAGE_KEYS.NUTRITION_TARGETS,
+    "nutritionTargets",
+    { calories: 2200, protein: 150 },
+    uid
+  );
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const restTimer = useRestTimer();
@@ -92,6 +100,20 @@ function WorkoutApp({ uid, email, onSignOut }) {
     [setBodyWeight]
   );
 
+  const handleAddNutritionEntry = useCallback(
+    (entry) => {
+      setNutrition((prev) => [...prev, entry]);
+    },
+    [setNutrition]
+  );
+
+  const handleDeleteNutritionEntry = useCallback(
+    (id) => {
+      setNutrition((prev) => prev.filter((e) => e.id !== id));
+    },
+    [setNutrition]
+  );
+
   return (
     <div className="app-shell">
       <PRToastLayer toasts={toasts} />
@@ -133,6 +155,15 @@ function WorkoutApp({ uid, email, onSignOut }) {
       )}
       {tab === "progress" && <Progress sessions={sessions} />}
       {tab === "week" && <Weekly sessions={sessions} />}
+      {tab === "nutrition" && (
+        <Nutrition
+          entries={nutrition}
+          targets={nutritionTargets}
+          onAddEntry={handleAddNutritionEntry}
+          onDeleteEntry={handleDeleteNutritionEntry}
+          onUpdateTargets={setNutritionTargets}
+        />
+      )}
       {tab === "bodyweight" && <BodyWeight entries={bodyWeight} onAdd={handleAddBodyWeight} />}
 
       <RestTimerBar

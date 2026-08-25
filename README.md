@@ -33,6 +33,11 @@ via Firebase (Firestore + email/password auth) when signed in.
   adjustment, and a skip button.
 - **Install as an app** — installable on your phone's home screen (PWA), works
   offline for the app shell once visited.
+- **Delete a set** — a × next to any already-logged set removes it and
+  renumbers the rest, for fixing a mis-log without editing storage by hand.
+- **Nutrition** — log calories/protein per entry (multiple a day, e.g. per
+  meal), see today's totals against a daily target as progress rings, and
+  view calorie/protein trend charts over time.
 
 ## Data & Sync
 
@@ -42,6 +47,8 @@ fully offline:
 - `wpt.sessions.v1` — logged sets per exercise/date
 - `wpt.bodyweight.v1` — body weight entries
 - `wpt.fridayPicks.v1` — chosen exercises per Jumaat date
+- `wpt.nutrition.v1` — logged calorie/protein entries
+- `wpt.nutritionTargets.v1` — daily calorie/protein goals
 
 Signing in (email/password, via Firebase Auth) also syncs each of these to
 Firestore under `users/{uid}/data/{sessions,bodyweight,fridayPicks}`, so the
@@ -114,6 +121,17 @@ still need real network. Icons live in `public/` (`pwa-192.png`, `pwa-512.png`,
 `pwa-maskable-512.png` for Android/desktop, `apple-touch-icon.png` for iOS).
 On mobile, open the deployed URL and use the browser's "Add to Home Screen" /
 "Install app" option.
+
+## Nutrition
+
+`src/utils/nutritionOps.js` holds the pure helpers: `totalsForDate` sums same-day
+entries (multiple allowed per day — breakfast, lunch, a snack — unlike body
+weight, which is naturally one reading), and `dailyTotalsSeries` rolls history
+into per-day totals for the trend charts. `src/screens/Nutrition.jsx` renders
+two SVG progress rings (today's calories/protein vs. your daily target),
+a quick-add form, a deletable list of today's entries, editable targets, and
+calorie/protein trend charts once there's 2+ days of history. Targets and
+entries both sync to Firestore the same way as the rest of the app's data.
 
 ## Development
 

@@ -889,6 +889,68 @@ input::placeholder, textarea::placeholder {
   font-variant-numeric: tabular-nums;
 }
 
+.nutrition-rings-card {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 24px 16px;
+}
+
+.ring-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ring-block svg {
+  margin-bottom: 4px;
+}
+
+.ring-value {
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.ring-target {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+
+.ring-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.nutrition-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.nutrition-row:last-child {
+  border-bottom: none;
+}
+
+.nutrition-row-label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nutrition-row-detail {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
 .rest-hero {
   text-align: center;
   padding: 56px 20px;

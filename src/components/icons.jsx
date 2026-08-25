@@ -100,3 +100,12 @@ export function IconTrophy(props) {
     </svg>
   );
 }
+
+export function IconFlame(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M12 3c.6 2.1-.4 3.3-1.6 4.6C9.2 8.9 8 10.4 8 12.5a4 4 0 0 0 8 0c0-1.2-.5-2-1-2.7.1 1-.3 1.7-1 1.7-.8 0-1.3-.7-1.2-1.6.2-1.6 1.2-2.6 1.2-4.4C14 4.3 13.2 3.5 12 3Z" />
+      <path d="M9.5 15.5a2.5 2.5 0 0 0 5 0" />
+    </svg>
+  );
+}

@@ -1,9 +1,10 @@
-import { IconToday, IconChart, IconCalendar, IconScale } from "./icons";
+import { IconToday, IconChart, IconCalendar, IconScale, IconFlame } from "./icons";
 
 const TABS = [
   { key: "today", label: "Today", Icon: IconToday },
   { key: "progress", label: "Progress", Icon: IconChart },
   { key: "week", label: "Week", Icon: IconCalendar },
+  { key: "nutrition", label: "Food", Icon: IconFlame },
   { key: "bodyweight", label: "Body", Icon: IconScale },
 ];
 

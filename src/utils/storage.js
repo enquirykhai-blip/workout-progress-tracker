@@ -3,6 +3,8 @@ export const STORAGE_KEYS = {
   BODY_WEIGHT: "wpt.bodyweight.v1",
   FRIDAY_PICKS: "wpt.fridayPicks.v1",
   REST_DURATION: "wpt.restDuration.v1",
+  NUTRITION: "wpt.nutrition.v1",
+  NUTRITION_TARGETS: "wpt.nutritionTargets.v1",
 };
 
 export function loadFromStorage(key, fallback) {
