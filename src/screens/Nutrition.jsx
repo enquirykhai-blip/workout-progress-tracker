@@ -6,6 +6,8 @@ import { entriesForDate, totalsForDate, dailyTotalsSeries } from "../utils/nutri
 import { useFoodScan } from "../hooks/useFoodScan";
 import { IconClose, IconCamera } from "../components/icons";
 
+const DEFAULT_TARGETS = { calories: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30 };
+
 function ProgressRing({ value, target, size = 104, stroke = 10 }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -51,28 +53,56 @@ function ChartTooltip({ active, payload, label, unit }) {
   );
 }
 
+function macroDetail(e) {
+  const parts = [];
+  if (e.calories != null) parts.push(`${e.calories} kcal`);
+  if (e.protein != null) parts.push(`${e.protein}g protein`);
+  if (e.carbs != null) parts.push(`${e.carbs}g carbs`);
+  if (e.fat != null) parts.push(`${e.fat}g fat`);
+  if (e.fiber != null) parts.push(`${e.fiber}g fiber`);
+  return parts.join(" · ");
+}
+
 export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry, onUpdateTargets }) {
   const date = todayISO();
   const todays = entriesForDate(entries, date);
   const totals = totalsForDate(entries, date);
+  // Older saved targets may predate carbs/fat/fiber tracking — fill in sane defaults.
+  const t = { ...DEFAULT_TARGETS, ...targets };
 
   const [label, setLabel] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
-  const [targetCalories, setTargetCalories] = useState(String(targets.calories));
-  const [targetProtein, setTargetProtein] = useState(String(targets.protein));
+  const [carbs, setCarbs] = useState("");
+  const [fat, setFat] = useState("");
+  const [fiber, setFiber] = useState("");
+  const [targetCalories, setTargetCalories] = useState(String(t.calories));
+  const [targetProtein, setTargetProtein] = useState(String(t.protein));
+  const [targetCarbs, setTargetCarbs] = useState(String(t.carbs));
+  const [targetFat, setTargetFat] = useState(String(t.fat));
+  const [targetFiber, setTargetFiber] = useState(String(t.fiber));
   const [scanConfidence, setScanConfidence] = useState(null);
   const fileInputRef = useRef(null);
   const { scan, scanning, error: scanError, clearError: clearScanError } = useFoodScan();
 
+  function toIntOrNull(v) {
+    return v === "" ? null : parseInt(v, 10);
+  }
+
   function handleAdd() {
-    const cals = calories === "" ? null : parseInt(calories, 10);
-    const prot = protein === "" ? null : parseInt(protein, 10);
-    if (cals == null && prot == null) return;
-    onAddEntry({ id: makeId(), date, label: label.trim(), calories: cals, protein: prot });
+    const cals = toIntOrNull(calories);
+    const prot = toIntOrNull(protein);
+    const carb = toIntOrNull(carbs);
+    const ft = toIntOrNull(fat);
+    const fib = toIntOrNull(fiber);
+    if (cals == null && prot == null && carb == null && ft == null && fib == null) return;
+    onAddEntry({ id: makeId(), date, label: label.trim(), calories: cals, protein: prot, carbs: carb, fat: ft, fiber: fib });
     setLabel("");
     setCalories("");
     setProtein("");
+    setCarbs("");
+    setFat("");
+    setFiber("");
     setScanConfidence(null);
   }
 
@@ -86,15 +116,23 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     if (result.label) setLabel(result.label);
     setCalories(String(result.calories));
     setProtein(String(result.protein));
+    if (result.carbs != null) setCarbs(String(result.carbs));
+    if (result.fat != null) setFat(String(result.fat));
+    if (result.fiber != null) setFiber(String(result.fiber));
     setScanConfidence(result.confidence);
   }
 
   function handleTargetBlur() {
-    const c = parseInt(targetCalories, 10) || 0;
-    const p = parseInt(targetProtein, 10) || 0;
-    onUpdateTargets({ calories: c, protein: p });
+    onUpdateTargets({
+      calories: parseInt(targetCalories, 10) || 0,
+      protein: parseInt(targetProtein, 10) || 0,
+      carbs: parseInt(targetCarbs, 10) || 0,
+      fat: parseInt(targetFat, 10) || 0,
+      fiber: parseInt(targetFiber, 10) || 0,
+    });
   }
 
+  const allFieldsBlank = calories === "" && protein === "" && carbs === "" && fat === "" && fiber === "";
   const series = dailyTotalsSeries(entries).map((d) => ({ ...d, dateLabel: formatShortDate(d.date) }));
 
   return (
@@ -107,20 +145,44 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
       <div className="card nutrition-rings-card">
         <div className="ring-block">
-          <ProgressRing value={totals.calories} target={targets.calories} />
+          <ProgressRing value={totals.calories} target={t.calories} />
           <div className="ring-value">
             {totals.calories}
-            <span className="ring-target"> / {targets.calories}</span>
+            <span className="ring-target"> / {t.calories}</span>
           </div>
           <div className="ring-label">kcal</div>
         </div>
         <div className="ring-block">
-          <ProgressRing value={totals.protein} target={targets.protein} />
+          <ProgressRing value={totals.protein} target={t.protein} />
           <div className="ring-value">
             {totals.protein}
-            <span className="ring-target"> / {targets.protein}</span>
+            <span className="ring-target"> / {t.protein}</span>
           </div>
           <div className="ring-label">protein (g)</div>
+        </div>
+      </div>
+
+      <div className="stat-row macro-stat-row">
+        <div className="stat-tile">
+          <div className="value">
+            {totals.carbs}
+            <span className="ring-target"> /{t.carbs}</span>
+          </div>
+          <div className="label">Carbs (g)</div>
+        </div>
+        <div className="stat-tile">
+          <div className="value">
+            {totals.fat}
+            <span className="ring-target"> /{t.fat}</span>
+          </div>
+          <div className="label">Fat (g)</div>
+        </div>
+        <div className="stat-tile">
+          <div className="value">
+            {totals.fiber}
+            <span className="ring-target"> /{t.fiber}</span>
+          </div>
+          <div className="label">Fiber (g)</div>
         </div>
       </div>
 
@@ -177,11 +239,45 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
             />
           </div>
         </div>
-        <div className="form-field" style={{ marginBottom: 12 }}>
-          <label>Label (optional)</label>
-          <input type="text" placeholder="e.g. Breakfast" value={label} onChange={(e) => setLabel(e.target.value)} />
+        <div className="form-row">
+          <div className="form-field">
+            <label>Carbs (g)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={carbs}
+              onChange={(e) => setCarbs(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </div>
+          <div className="form-field">
+            <label>Fat (g)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={fat}
+              onChange={(e) => setFat(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </div>
         </div>
-        <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={calories === "" && protein === ""}>
+        <div className="form-row">
+          <div className="form-field">
+            <label>Fiber (g)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="0"
+              value={fiber}
+              onChange={(e) => setFiber(e.target.value.replace(/[^0-9]/g, ""))}
+            />
+          </div>
+          <div className="form-field">
+            <label>Label (optional)</label>
+            <input type="text" placeholder="e.g. Breakfast" value={label} onChange={(e) => setLabel(e.target.value)} />
+          </div>
+        </div>
+        <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={allFieldsBlank}>
           Add Entry
         </button>
       </div>
@@ -194,11 +290,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
               <div className="nutrition-row" key={e.id}>
                 <div>
                   <div className="nutrition-row-label">{e.label || "Entry"}</div>
-                  <div className="nutrition-row-detail">
-                    {e.calories != null ? `${e.calories} kcal` : ""}
-                    {e.calories != null && e.protein != null ? " · " : ""}
-                    {e.protein != null ? `${e.protein}g protein` : ""}
-                  </div>
+                  <div className="nutrition-row-detail">{macroDetail(e)}</div>
                 </div>
                 <button className="set-delete-btn" onClick={() => onDeleteEntry(e.id)} aria-label="Delete entry">
                   <IconClose width={14} height={14} />
@@ -211,7 +303,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
       <div className="section-label">Daily Targets</div>
       <div className="card">
-        <div className="form-row" style={{ marginBottom: 0 }}>
+        <div className="form-row">
           <div className="form-field">
             <label>Calories</label>
             <input
@@ -232,6 +324,41 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
               onBlur={handleTargetBlur}
             />
           </div>
+        </div>
+        <div className="form-row" style={{ marginBottom: 0 }}>
+          <div className="form-field">
+            <label>Carbs (g)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={targetCarbs}
+              onChange={(e) => setTargetCarbs(e.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={handleTargetBlur}
+            />
+          </div>
+          <div className="form-field">
+            <label>Fat (g)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={targetFat}
+              onChange={(e) => setTargetFat(e.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={handleTargetBlur}
+            />
+          </div>
+        </div>
+        <div className="form-row" style={{ marginTop: 12, marginBottom: 0 }}>
+          <div className="form-field">
+            <label>Fiber (g)</label>
+            <input
+              type="text"
+              inputMode="numeric"
+              value={targetFiber}
+              onChange={(e) => setTargetFiber(e.target.value.replace(/[^0-9]/g, ""))}
+              onBlur={handleTargetBlur}
+            />
+          </div>
+          <div className="form-field" />
         </div>
       </div>
 

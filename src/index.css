@@ -650,6 +650,19 @@ input::placeholder, textarea::placeholder {
   letter-spacing: 0.04em;
 }
 
+.macro-stat-row {
+  margin: 14px 0;
+}
+
+.macro-stat-row .stat-tile .value {
+  font-size: 17px;
+  font-variant-numeric: tabular-nums;
+}
+
+.macro-stat-row .ring-target {
+  font-size: 11px;
+}
+
 .chip-row {
   display: flex;
   gap: 8px;

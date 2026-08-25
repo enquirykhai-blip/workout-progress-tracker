@@ -1,4 +1,4 @@
-// Cloudflare Worker — food photo → estimated calories/protein via OpenRouter.
+// Cloudflare Worker — food photo → estimated macros via OpenRouter.
 //
 // This exists purely as a reference copy for the repo; the actual deploy
 // target is the Cloudflare dashboard (Workers & Pages), not this file. Paste
@@ -9,10 +9,13 @@
 // OpenRouter.
 //
 // Request:  POST { image: "data:image/jpeg;base64,..." }
-// Response: { label, calories, protein, confidence } or { error }
+// Response: { label, calories, protein, carbs, fat, fiber, confidence } or { error }
 
 const ALLOWED_ORIGIN = "https://enquirykhai-blip.github.io";
-const MODEL = "google/gemini-2.0-flash-001";
+// NOTE: set this to whatever model slug is confirmed working on your deployed
+// Worker (openrouter.ai/models) — "google/gemini-2.0-flash-001" 404'd for one
+// user; "openai/gpt-4o-mini" is a solid, well-established fallback.
+const MODEL = "openai/gpt-4o-mini";
 const MAX_IMAGE_BYTES = 6 * 1024 * 1024; // ~6MB base64, generous for a phone photo
 
 function corsHeaders() {
@@ -81,12 +84,13 @@ export default {
                 {
                   type: "text",
                   text:
-                    "You are a nutrition estimator. Look at this food photo and estimate the " +
-                    "calories and protein (in grams) for the visible portion. Reply with ONLY " +
-                    'raw JSON, no markdown, no explanation, in exactly this shape: ' +
+                    "You are a nutrition estimator. Look at this food photo and estimate, for the " +
+                    "visible portion: calories, and protein/carbohydrates/fat/fiber in grams. " +
+                    "Reply with ONLY raw JSON, no markdown, no explanation, in exactly this shape: " +
                     '{"label": "short food name", "calories": <integer>, "protein": <integer>, ' +
-                    '"confidence": "low" | "medium" | "high"}. If the image does not contain ' +
-                    'food, reply {"label": "", "calories": 0, "protein": 0, "confidence": "low"}.',
+                    '"carbs": <integer>, "fat": <integer>, "fiber": <integer>, ' +
+                    '"confidence": "low" | "medium" | "high"}. If the image does not contain food, ' +
+                    'reply {"label": "", "calories": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0, "confidence": "low"}.',
                 },
                 { type: "image_url", image_url: { url: image } },
               ],
@@ -119,6 +123,9 @@ export default {
       label: String(parsed.label || "").slice(0, 60),
       calories: Math.max(0, Math.round(Number(parsed.calories) || 0)),
       protein: Math.max(0, Math.round(Number(parsed.protein) || 0)),
+      carbs: Math.max(0, Math.round(Number(parsed.carbs) || 0)),
+      fat: Math.max(0, Math.round(Number(parsed.fat) || 0)),
+      fiber: Math.max(0, Math.round(Number(parsed.fiber) || 0)),
       confidence: ["low", "medium", "high"].includes(parsed.confidence) ? parsed.confidence : "low",
     });
   },

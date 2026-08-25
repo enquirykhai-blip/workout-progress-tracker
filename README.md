@@ -35,12 +35,13 @@ via Firebase (Firestore + email/password auth) when signed in.
   offline for the app shell once visited.
 - **Delete a set** — a × next to any already-logged set removes it and
   renumbers the rest, for fixing a mis-log without editing storage by hand.
-- **Nutrition** — log calories/protein per entry (multiple a day, e.g. per
-  meal), see today's totals against a daily target as progress rings, and
-  view calorie/protein trend charts over time.
+- **Nutrition** — log calories, protein, carbs, fat, and fiber per entry
+  (multiple a day, e.g. per meal), see today's totals against daily targets
+  as progress rings (calories/protein) plus a compact macro stat row
+  (carbs/fat/fiber), and view calorie/protein trend charts over time.
 - **Scan Food Photo** — take/upload a food photo and an AI vision model
-  estimates calories and protein, pre-filling the entry for you to review
-  and adjust before saving.
+  estimates calories, protein, carbs, fat, and fiber, pre-filling the entry
+  for you to review and adjust before saving.
 
 ## Data & Sync
 
@@ -128,13 +129,17 @@ On mobile, open the deployed URL and use the browser's "Add to Home Screen" /
 ## Nutrition
 
 `src/utils/nutritionOps.js` holds the pure helpers: `totalsForDate` sums same-day
-entries (multiple allowed per day — breakfast, lunch, a snack — unlike body
-weight, which is naturally one reading), and `dailyTotalsSeries` rolls history
-into per-day totals for the trend charts. `src/screens/Nutrition.jsx` renders
-two SVG progress rings (today's calories/protein vs. your daily target),
-a quick-add form, a deletable list of today's entries, editable targets, and
-calorie/protein trend charts once there's 2+ days of history. Targets and
-entries both sync to Firestore the same way as the rest of the app's data.
+entries — calories, protein, carbs, fat, fiber — (multiple allowed per day —
+breakfast, lunch, a snack — unlike body weight, which is naturally one
+reading), and `dailyTotalsSeries` rolls history into per-day totals for the
+trend charts. `src/screens/Nutrition.jsx` renders two SVG progress rings for
+calories/protein (the two most glanced-at numbers) plus a compact 3-tile
+stat row for carbs/fat/fiber, a quick-add form covering all five, a
+deletable list of today's entries, editable targets for all five (older
+saved targets that predate carbs/fat/fiber fall back to sane defaults —
+250g/70g/30g), and calorie/protein trend charts once there's 2+ days of
+history. Targets and entries both sync to Firestore the same way as the
+rest of the app's data.
 
 ## Scan Food Photo (AI)
 

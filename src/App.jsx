@@ -34,7 +34,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [nutritionTargets, setNutritionTargets] = useCloudState(
     STORAGE_KEYS.NUTRITION_TARGETS,
     "nutritionTargets",
-    { calories: 2200, protein: 150 },
+    { calories: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30 },
     uid
   );
   const [toasts, setToasts] = useState([]);
