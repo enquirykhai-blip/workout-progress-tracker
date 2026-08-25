@@ -141,7 +141,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
   const [scanConfidence, setScanConfidence] = useState(null);
   const [scanSource, setScanSource] = useState(null);
   const fileInputRef = useRef(null);
-  const { scan, scanning, error: scanError, clearError: clearScanError } = useFoodScan();
+  const { scan, estimateFromText, scanning, error: scanError, clearError: clearScanError } = useFoodScan();
 
   function toIntOrNull(v) {
     return v === "" ? null : parseInt(v, 10);
@@ -183,6 +183,23 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     setScanConfidence(null);
     setScanSource(null);
     const result = await scan(file);
+    if (!result) return;
+    if (result.label) setLabel(result.label);
+    setCalories(String(result.calories));
+    setProtein(String(result.protein));
+    if (result.carbs != null) setCarbs(String(result.carbs));
+    if (result.fat != null) setFat(String(result.fat));
+    if (result.fiber != null) setFiber(String(result.fiber));
+    setScanConfidence(result.confidence);
+    setScanSource(result.source || "estimate");
+  }
+
+  async function handleEstimateFromText() {
+    const description = label.trim();
+    if (!description) return;
+    setScanConfidence(null);
+    setScanSource(null);
+    const result = await estimateFromText(description);
     if (!result) return;
     if (result.label) setLabel(result.label);
     setCalories(String(result.calories));
@@ -339,6 +356,16 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
             ))}
           </div>
 
+          <div className="form-field" style={{ marginBottom: 14 }}>
+            <label>What did you eat?</label>
+            <input
+              type="text"
+              placeholder="e.g. Chicken Rice, or nasi lemak with 2 eggs"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+            />
+          </div>
+
           <input
             ref={fileInputRef}
             type="file"
@@ -347,15 +374,25 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
             style={{ display: "none" }}
             onChange={handlePhotoSelected}
           />
-          <button
-            className="btn btn-secondary btn-block"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={scanning}
-            style={{ marginBottom: 14 }}
-          >
-            <IconCamera width={16} height={16} />
-            {scanning ? "Analyzing photo..." : "Scan Food or Label"}
-          </button>
+          <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={() => fileInputRef.current?.click()}
+              disabled={scanning}
+            >
+              <IconCamera width={16} height={16} />
+              {scanning ? "Working..." : "Scan Photo/Label"}
+            </button>
+            <button
+              className="btn btn-secondary"
+              style={{ flex: 1 }}
+              onClick={handleEstimateFromText}
+              disabled={scanning || !label.trim()}
+            >
+              ✨ {scanning ? "Working..." : "Estimate with AI"}
+            </button>
+          </div>
 
           {scanError && (
             <p className="scan-error" onClick={clearScanError}>
@@ -426,10 +463,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
                 onChange={(e) => setFiber(e.target.value.replace(/[^0-9]/g, ""))}
               />
             </div>
-            <div className="form-field">
-              <label>Label (optional)</label>
-              <input type="text" placeholder="e.g. Chicken Rice" value={label} onChange={(e) => setLabel(e.target.value)} />
-            </div>
+            <div className="form-field" />
           </div>
         </Sheet>
       )}

@@ -10,9 +10,23 @@ function fileToDataUrl(file) {
   });
 }
 
-// Sends a food photo to the Cloudflare Worker proxy (never directly to
-// OpenRouter — the API key lives only on the Worker) and returns its
-// { label, calories, protein, confidence } estimate, or null on failure.
+async function postToWorker(payload) {
+  const res = await fetch(FOOD_SCAN_WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || data.error) {
+    throw new Error(data.error || "Estimate failed. Try again.");
+  }
+  return data;
+}
+
+// Sends a food photo, or a typed food description, to the Cloudflare Worker
+// proxy (never directly to OpenRouter — the API key lives only on the
+// Worker) and returns its { label, calories, protein, carbs, fat, fiber,
+// confidence, source } estimate, or null on failure.
 export function useFoodScan() {
   const [scanning, setScanning] = useState(false);
   const [error, setError] = useState("");
@@ -22,16 +36,7 @@ export function useFoodScan() {
     setScanning(true);
     try {
       const dataUrl = await fileToDataUrl(file);
-      const res = await fetch(FOOD_SCAN_WORKER_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image: dataUrl }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Scan failed. Try again.");
-      }
-      return data;
+      return await postToWorker({ image: dataUrl });
     } catch (err) {
       setError(err.message || "Something went wrong scanning the photo.");
       return null;
@@ -40,5 +45,18 @@ export function useFoodScan() {
     }
   }
 
-  return { scan, scanning, error, clearError: () => setError("") };
+  async function estimateFromText(text) {
+    setError("");
+    setScanning(true);
+    try {
+      return await postToWorker({ text });
+    } catch (err) {
+      setError(err.message || "Something went wrong estimating that.");
+      return null;
+    } finally {
+      setScanning(false);
+    }
+  }
+
+  return { scan, estimateFromText, scanning, error, clearError: () => setError("") };
 }

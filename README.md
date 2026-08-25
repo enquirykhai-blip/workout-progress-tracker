@@ -36,15 +36,16 @@ via Firebase (Firestore + email/password auth) when signed in.
 - **Delete a set** — a × next to any already-logged set removes it and
   renumbers the rest, for fixing a mis-log without editing storage by hand.
 - **Nutrition** — log calories, protein, carbs, fat, and fiber per entry
-  (multiple a day, e.g. per meal), see today's totals against daily targets
-  as progress rings (calories/protein) plus a compact macro stat row
-  (carbs/fat/fiber), and view calorie/protein trend charts over time.
-- **Scan Food or Label** — take/upload a photo of either plated food or a
-  packaged item's printed nutrition facts label. An AI vision model tells
-  the two apart: for a label it reads the exact printed calories, protein,
-  carbs, fat, and fiber for one serving; for a food photo it visually
-  estimates the same five values. Either way the entry is pre-filled for
-  you to review and adjust before saving.
+  (multiple a day, grouped by meal — Breakfast/Lunch/Dinner/Snack), see
+  today's totals against daily targets as a calorie ring plus four macro
+  pills, and view calorie/protein trend charts over time.
+- **Scan Food or Label, or just describe it** — take/upload a photo of
+  either plated food or a packaged item's printed nutrition facts label, or
+  skip the camera entirely and type what you ate (e.g. "nasi lemak with 2
+  eggs"). An AI model handles all three: for a label it reads the exact
+  printed calories/protein/carbs/fat/fiber for one serving; for a food photo
+  or a typed description it estimates the same five values. Either way the
+  entry is pre-filled for you to review and adjust before saving.
 
 ## Data & Sync
 
@@ -155,50 +156,60 @@ uncluttered. Calorie/protein trend charts still appear below once there's
 2+ days of history. Targets and entries both sync to Firestore the same way
 as the rest of the app's data.
 
-## Scan Food or Label (AI)
+## Scan Food or Label, or Type It (AI)
 
-The app is a static site with no server of its own, and an AI vision API key
-can never safely live in client-side code — anyone could open DevTools and
+The app is a static site with no server of its own, and an AI API key can
+never safely live in client-side code — anyone could open DevTools and
 steal it. So this feature routes through a small Cloudflare Worker that holds
 the key server-side:
 
 ```
-phone camera → app (src/hooks/useFoodScan.js)
+photo or typed text → app (src/hooks/useFoodScan.js)
              → Cloudflare Worker (cloudflare/food-scan-worker.js, holds the
                OpenRouter key as an encrypted secret, never in this repo)
-             → OpenRouter → a vision model
+             → OpenRouter → a vision/text model
              → structured { label, calories, protein, carbs, fat, fiber,
                confidence, source } back to the app
 ```
 
-The Worker's prompt asks the model to first decide what it's looking at:
+The Worker accepts either `{ image }` or `{ text }` in the POST body (never
+both) and picks the matching prompt:
 
-- **A printed nutrition facts label** on packaging — the model reads the
-  exact stated calories/protein/carbs/fat/fiber for one serving straight off
-  the label text (no guessing), and the response comes back with
-  `source: "label"` and `confidence: "high"`.
-- **A plain food photo** with no label — the model visually estimates the
-  same five values for the portion shown, and the response comes back with
-  `source: "estimate"` and a confidence that reflects how sure it is.
+- **A printed nutrition facts label** on packaging (`image`) — the model
+  reads the exact stated calories/protein/carbs/fat/fiber for one serving
+  straight off the label text (no guessing), and the response comes back
+  with `source: "label"` and `confidence: "high"`.
+- **A plain food photo** with no label (`image`) — the model visually
+  estimates the same five values for the portion shown, and the response
+  comes back with `source: "estimate"` and a confidence that reflects how
+  sure it is.
+- **A typed description** (`text`, e.g. "nasi lemak with 2 eggs") — no
+  photo at all, the model estimates the five values for a typical serving
+  of whatever was described. Always `source: "estimate"`, since there's
+  nothing exact to read off text.
 
-`src/screens/Nutrition.jsx` uses `source` to show a different note after a
-scan: "Read from the nutrition label — double-check it matches your
+`src/screens/Nutrition.jsx` uses `source` to show a different note after an
+estimate: "Read from the nutrition label — double-check it matches your
 serving" for a label read, versus "AI estimate (_confidence_) — review the
-numbers below" for a visual estimate. Either way, nothing is saved
+numbers below" for a visual or text estimate. Either way, nothing is saved
 automatically — you always review the pre-filled numbers before logging.
 
 - `cloudflare/food-scan-worker.js` — reference copy of the Worker's source.
   The real deploy target is the Cloudflare dashboard, not this repo; paste
   this file's contents into the Worker editor there. Its CORS is locked to
-  this app's exact origin, and it caps the accepted image size.
+  this app's exact origin, and it caps both the accepted image size and the
+  typed description length.
 - `src/aiConfig.js` — exports `FOOD_SCAN_WORKER_URL`, the public Worker URL
   (not a secret — replace the placeholder with your deployed Worker's URL).
-- `src/hooks/useFoodScan.js` — converts the photo to a data URL, POSTs it to
-  the Worker, and surfaces loading/error state.
-- `src/screens/Nutrition.jsx` — the "Scan Food or Label" button (inside the
-  Add Food sheet) opens the device camera (`capture="environment"`), and a
-  successful scan pre-fills the label/calorie/protein/carbs/fat/fiber
-  fields based on whichever mode the model detected.
+- `src/hooks/useFoodScan.js` — `scan(file)` converts a photo to a data URL
+  and POSTs `{ image }`; `estimateFromText(text)` POSTs `{ text }` instead.
+  Both share the same loading/error state, since only one runs at a time.
+- `src/screens/Nutrition.jsx` — inside the Add Food sheet, the "What did you
+  eat?" field doubles as both the entry's label and the text sent to
+  "Estimate with AI" (disabled until you type something); "Scan Photo/Label"
+  next to it opens the device camera (`capture="environment"`) for the
+  image path instead. Either one pre-fills the label/calorie/protein/carbs/
+  fat/fiber fields for you to review before saving.
 
 To point this at your own Worker: deploy `cloudflare/food-scan-worker.js` to
 Cloudflare Workers, set `OPENROUTER_API_KEY` as an encrypted secret in the
