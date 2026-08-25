@@ -38,6 +38,9 @@ via Firebase (Firestore + email/password auth) when signed in.
 - **Nutrition** — log calories/protein per entry (multiple a day, e.g. per
   meal), see today's totals against a daily target as progress rings, and
   view calorie/protein trend charts over time.
+- **Scan Food Photo** — take/upload a food photo and an AI vision model
+  estimates calories and protein, pre-filling the entry for you to review
+  and adjust before saving.
 
 ## Data & Sync
 
@@ -132,6 +135,40 @@ two SVG progress rings (today's calories/protein vs. your daily target),
 a quick-add form, a deletable list of today's entries, editable targets, and
 calorie/protein trend charts once there's 2+ days of history. Targets and
 entries both sync to Firestore the same way as the rest of the app's data.
+
+## Scan Food Photo (AI)
+
+The app is a static site with no server of its own, and an AI vision API key
+can never safely live in client-side code — anyone could open DevTools and
+steal it. So this feature routes through a small Cloudflare Worker that holds
+the key server-side:
+
+```
+phone camera → app (src/hooks/useFoodScan.js)
+             → Cloudflare Worker (cloudflare/food-scan-worker.js, holds the
+               OpenRouter key as an encrypted secret, never in this repo)
+             → OpenRouter → a vision model
+             → structured { label, calories, protein, confidence } back to the app
+```
+
+- `cloudflare/food-scan-worker.js` — reference copy of the Worker's source.
+  The real deploy target is the Cloudflare dashboard, not this repo; paste
+  this file's contents into the Worker editor there. Its CORS is locked to
+  this app's exact origin, and it caps the accepted image size.
+- `src/aiConfig.js` — exports `FOOD_SCAN_WORKER_URL`, the public Worker URL
+  (not a secret — replace the placeholder with your deployed Worker's URL).
+- `src/hooks/useFoodScan.js` — converts the photo to a data URL, POSTs it to
+  the Worker, and surfaces loading/error state.
+- `src/screens/Nutrition.jsx` — the "Scan Food Photo" button opens the
+  device camera (`capture="environment"`), and a successful scan pre-fills
+  the calorie/protein/label fields — it never saves automatically, so you
+  always get to review the AI's estimate before it's logged.
+
+To point this at your own Worker: deploy `cloudflare/food-scan-worker.js` to
+Cloudflare Workers, set `OPENROUTER_API_KEY` as an encrypted secret in the
+Worker's settings (Settings → Variables and Secrets → Secret, never a
+plaintext variable), and update `FOOD_SCAN_WORKER_URL` in `src/aiConfig.js`
+to the deployed Worker's `*.workers.dev` URL.
 
 ## Development
 

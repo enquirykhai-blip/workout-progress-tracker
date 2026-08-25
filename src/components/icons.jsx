@@ -109,3 +109,12 @@ export function IconFlame(props) {
     </svg>
   );
 }
+
+export function IconCamera(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M4 8.5a1.5 1.5 0 0 1 1.5-1.5h1.6l.9-1.5a1 1 0 0 1 .86-.5h6.28a1 1 0 0 1 .86.5l.9 1.5h1.6A1.5 1.5 0 0 1 20 8.5v9A1.5 1.5 0 0 1 18.5 19h-13A1.5 1.5 0 0 1 4 17.5Z" />
+      <circle cx="12" cy="13" r="3.5" />
+    </svg>
+  );
+}

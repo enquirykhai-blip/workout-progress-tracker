@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { todayISO, formatDisplayDate, formatShortDate } from "../utils/date";
 import { makeId } from "../utils/id";
 import { entriesForDate, totalsForDate, dailyTotalsSeries } from "../utils/nutritionOps";
-import { IconClose } from "../components/icons";
+import { useFoodScan } from "../hooks/useFoodScan";
+import { IconClose, IconCamera } from "../components/icons";
 
 function ProgressRing({ value, target, size = 104, stroke = 10 }) {
   const radius = (size - stroke) / 2;
@@ -60,6 +61,9 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
   const [protein, setProtein] = useState("");
   const [targetCalories, setTargetCalories] = useState(String(targets.calories));
   const [targetProtein, setTargetProtein] = useState(String(targets.protein));
+  const [scanConfidence, setScanConfidence] = useState(null);
+  const fileInputRef = useRef(null);
+  const { scan, scanning, error: scanError, clearError: clearScanError } = useFoodScan();
 
   function handleAdd() {
     const cals = calories === "" ? null : parseInt(calories, 10);
@@ -69,6 +73,20 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     setLabel("");
     setCalories("");
     setProtein("");
+    setScanConfidence(null);
+  }
+
+  async function handlePhotoSelected(e) {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // allow picking the same file again later
+    if (!file) return;
+    setScanConfidence(null);
+    const result = await scan(file);
+    if (!result) return;
+    if (result.label) setLabel(result.label);
+    setCalories(String(result.calories));
+    setProtein(String(result.protein));
+    setScanConfidence(result.confidence);
   }
 
   function handleTargetBlur() {
@@ -107,6 +125,36 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
       </div>
 
       <div className="card">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          capture="environment"
+          style={{ display: "none" }}
+          onChange={handlePhotoSelected}
+        />
+        <button
+          className="btn btn-secondary btn-block"
+          onClick={() => fileInputRef.current?.click()}
+          disabled={scanning}
+          style={{ marginBottom: 14 }}
+        >
+          <IconCamera width={16} height={16} />
+          {scanning ? "Analyzing photo..." : "Scan Food Photo"}
+        </button>
+
+        {scanError && (
+          <p className="scan-error" onClick={clearScanError}>
+            {scanError}
+          </p>
+        )}
+
+        {scanConfidence && !scanError && (
+          <p className="scan-note">
+            AI estimate ({scanConfidence} confidence) — review the numbers below before saving.
+          </p>
+        )}
+
         <div className="form-row">
           <div className="form-field">
             <label>Calories</label>
