@@ -9,9 +9,9 @@
   --text: #f5f5f7;
   --text-secondary: rgba(235, 235, 245, 0.6);
   --text-tertiary: rgba(235, 235, 245, 0.38);
-  --accent: #ff3b5c;
-  --accent-dim: rgba(255, 59, 92, 0.16);
-  --accent-glow: rgba(255, 59, 92, 0.45);
+  --accent: #ffffff;
+  --accent-dim: rgba(255, 255, 255, 0.14);
+  --accent-glow: rgba(255, 255, 255, 0.35);
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -168,7 +168,7 @@ input::placeholder, textarea::placeholder {
 
 .btn-primary {
   background: var(--accent);
-  color: #fff;
+  color: #000;
 }
 
 .btn-secondary {
@@ -326,7 +326,7 @@ input::placeholder, textarea::placeholder {
   align-items: center;
   gap: 8px;
   background: var(--accent);
-  color: #fff;
+  color: #000;
   font-weight: 700;
   font-size: 14px;
   padding: 12px 18px;
@@ -486,7 +486,7 @@ input::placeholder, textarea::placeholder {
 }
 
 .set-log-btn.done svg {
-  color: #fff;
+  color: #000;
 }
 
 .set-log-btn:disabled {
@@ -596,7 +596,7 @@ input::placeholder, textarea::placeholder {
 .week-status-dot svg {
   width: 14px;
   height: 14px;
-  color: #fff;
+  color: #000;
 }
 
 .week-nav {
@@ -669,7 +669,7 @@ input::placeholder, textarea::placeholder {
 .chip.active {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: #000;
 }
 
 .history-table {
@@ -814,7 +814,7 @@ input::placeholder, textarea::placeholder {
 .checkbox svg {
   width: 13px;
   height: 13px;
-  color: #fff;
+  color: #000;
 }
 
 .form-row {
@@ -1017,7 +1017,7 @@ input::placeholder, textarea::placeholder {
   height: 54px;
   border-radius: 50%;
   background: var(--accent);
-  color: #fff;
+  color: #000;
   display: flex;
   align-items: center;
   justify-content: center;
