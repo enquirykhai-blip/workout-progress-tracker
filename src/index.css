@@ -13,22 +13,6 @@
   --accent-dim: rgba(255, 59, 92, 0.16);
   --accent-glow: rgba(255, 59, 92, 0.45);
   --success: #32d74b;
-  --macro-carbs: #ff9f0a;
-  --macro-carbs-dim: rgba(255, 159, 10, 0.18);
-  --macro-protein: #0a84ff;
-  --macro-protein-dim: rgba(10, 132, 255, 0.18);
-  --macro-fat: #bf5af2;
-  --macro-fat-dim: rgba(191, 90, 242, 0.18);
-  --macro-fiber: #30d158;
-  --macro-fiber-dim: rgba(48, 209, 88, 0.18);
-  --meal-breakfast: #ff9f0a;
-  --meal-breakfast-dim: rgba(255, 159, 10, 0.18);
-  --meal-lunch: #30d158;
-  --meal-lunch-dim: rgba(48, 209, 88, 0.18);
-  --meal-dinner: #0a84ff;
-  --meal-dinner-dim: rgba(10, 132, 255, 0.18);
-  --meal-snack: #ff3b5c;
-  --meal-snack-dim: rgba(255, 59, 92, 0.18);
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -972,6 +956,8 @@ input::placeholder, textarea::placeholder {
   align-items: center;
   justify-content: center;
   font-size: 14px;
+  background: var(--surface-pressed);
+  color: var(--accent);
 }
 
 .macro-pill-value {
@@ -1013,6 +999,8 @@ input::placeholder, textarea::placeholder {
   justify-content: center;
   font-size: 14px;
   flex-shrink: 0;
+  background: var(--surface-pressed);
+  border: 1px solid var(--border);
 }
 
 .meal-group-name {
@@ -1069,6 +1057,8 @@ input::placeholder, textarea::placeholder {
   align-items: center;
   justify-content: center;
   font-size: 15px;
+  background: var(--surface-pressed);
+  border: 1px solid var(--border);
 }
 
 .nutrition-row-main {

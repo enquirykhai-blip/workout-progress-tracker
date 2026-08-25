@@ -16,20 +16,6 @@ import Sheet from "../components/Sheet";
 
 const DEFAULT_TARGETS = { calories: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30 };
 
-const MEAL_COLORS = {
-  breakfast: { color: "var(--meal-breakfast)", dim: "var(--meal-breakfast-dim)" },
-  lunch: { color: "var(--meal-lunch)", dim: "var(--meal-lunch-dim)" },
-  dinner: { color: "var(--meal-dinner)", dim: "var(--meal-dinner-dim)" },
-  snack: { color: "var(--meal-snack)", dim: "var(--meal-snack-dim)" },
-};
-
-const MACRO_COLORS = {
-  carbs: { color: "var(--macro-carbs)", dim: "var(--macro-carbs-dim)" },
-  protein: { color: "var(--macro-protein)", dim: "var(--macro-protein-dim)" },
-  fat: { color: "var(--macro-fat)", dim: "var(--macro-fat-dim)" },
-  fiber: { color: "var(--macro-fiber)", dim: "var(--macro-fiber-dim)" },
-};
-
 function ProgressRing({ value, target, size = 104, stroke = 10, color = "var(--accent)" }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -55,11 +41,10 @@ function ProgressRing({ value, target, size = 104, stroke = 10, color = "var(--a
   );
 }
 
-function MacroPill({ macro, label, value, target }) {
-  const { color, dim } = MACRO_COLORS[macro];
+function MacroPill({ label, value, target }) {
   return (
     <div className="macro-pill">
-      <div className="macro-pill-icon" style={{ background: dim, color }}>
+      <div className="macro-pill-icon">
         <svg width={14} height={14} viewBox="0 0 36 36">
           <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
           <circle
@@ -254,46 +239,39 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
         </div>
 
         <div className="macro-pill-row">
-          <MacroPill macro="carbs" label="Carbs" value={totals.carbs} target={t.carbs} />
-          <MacroPill macro="protein" label="Protein" value={totals.protein} target={t.protein} />
+          <MacroPill label="Carbs" value={totals.carbs} target={t.carbs} />
+          <MacroPill label="Protein" value={totals.protein} target={t.protein} />
         </div>
         <div className="macro-pill-row" style={{ marginTop: 0 }}>
-          <MacroPill macro="fat" label="Fat" value={totals.fat} target={t.fat} />
-          <MacroPill macro="fiber" label="Fiber" value={totals.fiber} target={t.fiber} />
+          <MacroPill label="Fat" value={totals.fat} target={t.fat} />
+          <MacroPill label="Fiber" value={totals.fiber} target={t.fiber} />
         </div>
       </div>
 
       {mealGroups.length > 0 ? (
-        mealGroups.map((group) => {
-          const { color, dim } = MEAL_COLORS[group.type];
-          return (
-            <div className="meal-group" key={group.type}>
-              <div className="meal-group-header">
-                <div className="meal-icon-bubble" style={{ background: dim, color }}>
-                  {group.emoji}
-                </div>
-                <div className="meal-group-name">{group.label}</div>
-                <div className="meal-group-total">{group.totalCalories} kcal</div>
-              </div>
-              <div className="card">
-                {group.entries.map((e) => (
-                  <div className="nutrition-row" key={e.id}>
-                    <div className="nutrition-row-icon" style={{ background: dim, color }}>
-                      {group.emoji}
-                    </div>
-                    <div className="nutrition-row-main">
-                      <div className="nutrition-row-label">{e.label || group.label}</div>
-                      <div className="nutrition-row-detail">{macroDetail(e)}</div>
-                    </div>
-                    <button className="set-delete-btn" onClick={() => onDeleteEntry(e.id)} aria-label="Delete entry">
-                      <IconClose width={14} height={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
+        mealGroups.map((group) => (
+          <div className="meal-group" key={group.type}>
+            <div className="meal-group-header">
+              <div className="meal-icon-bubble">{group.emoji}</div>
+              <div className="meal-group-name">{group.label}</div>
+              <div className="meal-group-total">{group.totalCalories} kcal</div>
             </div>
-          );
-        })
+            <div className="card">
+              {group.entries.map((e) => (
+                <div className="nutrition-row" key={e.id}>
+                  <div className="nutrition-row-icon">{group.emoji}</div>
+                  <div className="nutrition-row-main">
+                    <div className="nutrition-row-label">{e.label || group.label}</div>
+                    <div className="nutrition-row-detail">{macroDetail(e)}</div>
+                  </div>
+                  <button className="set-delete-btn" onClick={() => onDeleteEntry(e.id)} aria-label="Delete entry">
+                    <IconClose width={14} height={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
       ) : (
         <div className="card" style={{ textAlign: "center", padding: "28px 16px", color: "var(--text-secondary)", fontSize: 13.5 }}>
           Nothing logged yet today — tap + to add a meal.
@@ -323,7 +301,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
                 <XAxis dataKey="dateLabel" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={34} />
                 <Tooltip content={<ChartTooltip unit="g" />} />
-                <Line type="monotone" dataKey="protein" stroke="var(--macro-protein)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--macro-protein)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="protein" stroke="var(--text-secondary)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--text-secondary)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -390,7 +368,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
               onClick={handleEstimateFromText}
               disabled={scanning || !label.trim()}
             >
-              ✨ {scanning ? "Working..." : "Estimate with AI"}
+              {scanning ? "Working..." : "Estimate with AI"}
             </button>
           </div>
 

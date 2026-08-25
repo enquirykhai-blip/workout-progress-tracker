@@ -145,16 +145,19 @@ opens on a sensible default.
 
 `src/screens/Nutrition.jsx` leads with a single large calorie ring showing
 kcal left today (or over, once past target) plus four small macro pills —
-carbs/protein/fat/fiber, each with its own mini ring and color — below it.
-Entries render grouped by meal, each with a colored icon bubble matching
-that meal's theme color. Adding an entry (manual or via AI scan) happens in
-a bottom sheet opened from a floating "+" button, with a meal-type picker
-at the top; editing daily targets (older saved targets that predate
-carbs/fat/fiber fall back to sane defaults — 250g/70g/30g) lives in its own
-sheet behind a "Targets" link on the ring card, keeping the main screen
-uncluttered. Calorie/protein trend charts still appear below once there's
-2+ days of history. Targets and entries both sync to Firestore the same way
-as the rest of the app's data.
+carbs/protein/fat/fiber, each with its own mini ring — below it. Styling
+stays within the app's existing dark, monochrome-plus-one-accent language
+(no per-macro or per-meal colors): icon bubbles are neutral gray, and the
+single `--accent` color is reused consistently for every progress ring on
+the screen. Entries render grouped by meal (still identifiable via a small
+emoji per meal type), each in that neutral icon bubble. Adding an entry
+(manual or via AI scan) happens in a bottom sheet opened from a floating
+"+" button, with a meal-type picker at the top; editing daily targets
+(older saved targets that predate carbs/fat/fiber fall back to sane
+defaults — 250g/70g/30g) lives in its own sheet behind a "Targets" link on
+the ring card, keeping the main screen uncluttered. Calorie/protein trend
+charts still appear below once there's 2+ days of history. Targets and
+entries both sync to Firestore the same way as the rest of the app's data.
 
 ## Scan Food or Label, or Type It (AI)
 
