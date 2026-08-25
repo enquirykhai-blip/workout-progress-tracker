@@ -46,7 +46,7 @@ function MacroPill({ label, value, target }) {
     <div className="macro-pill">
       <div className="macro-pill-icon">
         <svg width={14} height={14} viewBox="0 0 36 36">
-          <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
+          <circle cx="18" cy="18" r="15" fill="none" stroke="var(--border-strong)" strokeWidth="4" />
           <circle
             cx="18"
             cy="18"
@@ -283,10 +283,10 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
           <div className="section-label">Calories Trend</div>
           <div className="card" style={{ height: 180, padding: "16px 8px 8px" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={series} margin={{ top: 4, right: 12, bottom: 0, left: -18 }}>
+              <LineChart data={series} margin={{ top: 4, right: 12, bottom: 0, left: -6 }}>
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="dateLabel" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={34} />
+                <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={40} />
                 <Tooltip content={<ChartTooltip unit="kcal" />} />
                 <Line type="monotone" dataKey="calories" stroke="var(--accent)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
               </LineChart>
@@ -296,10 +296,10 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
           <div className="section-label">Protein Trend</div>
           <div className="card" style={{ height: 180, padding: "16px 8px 8px" }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={series} margin={{ top: 4, right: 12, bottom: 0, left: -18 }}>
+              <LineChart data={series} margin={{ top: 4, right: 12, bottom: 0, left: -6 }}>
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="dateLabel" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={34} />
+                <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={40} />
                 <Tooltip content={<ChartTooltip unit="g" />} />
                 <Line type="monotone" dataKey="protein" stroke="var(--text-secondary)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--text-secondary)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
               </LineChart>

@@ -74,7 +74,7 @@ export default function BodyWeight({ entries, onAdd }) {
       {chartData.length >= 2 && (
         <div className="card" style={{ height: 200, padding: "16px 8px 8px", marginBottom: 16 }}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -18 }}>
+            <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -6 }}>
               <CartesianGrid stroke="var(--border)" vertical={false} />
               <XAxis dataKey="date" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
               <YAxis
@@ -82,7 +82,7 @@ export default function BodyWeight({ entries, onAdd }) {
                 tick={{ fontSize: 11, fill: "var(--text-tertiary)" }}
                 tickLine={false}
                 axisLine={false}
-                width={34}
+                width={40}
                 domain={["dataMin - 2", "dataMax + 2"]}
               />
               <Tooltip content={<ChartTooltip />} />
@@ -115,9 +115,8 @@ export default function BodyWeight({ entries, onAdd }) {
                 <div>
                   <div className="bw-date">{formatDisplayDate(entry.date)}</div>
                   {delta !== null && delta !== 0 && (
-                    <div className={`bw-delta ${delta < 0 ? "down" : "up"}`}>
-                      {delta > 0 ? "+" : ""}
-                      {delta} kg
+                    <div className="bw-delta">
+                      {delta < 0 ? "↓" : "↑"} {Math.abs(delta)} kg
                     </div>
                   )}
                 </div>

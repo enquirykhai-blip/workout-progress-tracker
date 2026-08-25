@@ -160,7 +160,7 @@ export default function Progress({ sessions }) {
           {chartData.length >= 2 && (
             <div className="card" style={{ height: 220, padding: "16px 8px 8px" }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -18 }}>
+                <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -6 }}>
                   <CartesianGrid stroke="var(--border)" vertical={false} />
                   <XAxis
                     dataKey="date"
@@ -174,7 +174,7 @@ export default function Progress({ sessions }) {
                     tick={{ fontSize: 11, fill: "var(--text-tertiary)" }}
                     tickLine={false}
                     axisLine={false}
-                    width={34}
+                    width={40}
                   />
                   <Tooltip content={<ChartTooltip unit={chartMode === "weight" ? "kg" : "reps"} />} />
                   <Line
