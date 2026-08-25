@@ -134,15 +134,26 @@ On mobile, open the deployed URL and use the browser's "Add to Home Screen" /
 `src/utils/nutritionOps.js` holds the pure helpers: `totalsForDate` sums same-day
 entries — calories, protein, carbs, fat, fiber — (multiple allowed per day —
 breakfast, lunch, a snack — unlike body weight, which is naturally one
-reading), and `dailyTotalsSeries` rolls history into per-day totals for the
-trend charts. `src/screens/Nutrition.jsx` renders two SVG progress rings for
-calories/protein (the two most glanced-at numbers) plus a compact 3-tile
-stat row for carbs/fat/fiber, a quick-add form covering all five, a
-deletable list of today's entries, editable targets for all five (older
-saved targets that predate carbs/fat/fiber fall back to sane defaults —
-250g/70g/30g), and calorie/protein trend charts once there's 2+ days of
-history. Targets and entries both sync to Firestore the same way as the
-rest of the app's data.
+reading), `dailyTotalsSeries` rolls history into per-day totals for the
+trend charts, and `groupEntriesByMealType` buckets a day's entries into
+Breakfast/Lunch/Dinner/Snack (in that order, skipping empty meals) with a
+per-meal calorie subtotal — entries logged before meal tagging existed fall
+back to "Snack". `currentMealType()` guesses which meal a new entry
+probably belongs to from the current time of day, so the add-entry form
+opens on a sensible default.
+
+`src/screens/Nutrition.jsx` leads with a single large calorie ring showing
+kcal left today (or over, once past target) plus four small macro pills —
+carbs/protein/fat/fiber, each with its own mini ring and color — below it.
+Entries render grouped by meal, each with a colored icon bubble matching
+that meal's theme color. Adding an entry (manual or via AI scan) happens in
+a bottom sheet opened from a floating "+" button, with a meal-type picker
+at the top; editing daily targets (older saved targets that predate
+carbs/fat/fiber fall back to sane defaults — 250g/70g/30g) lives in its own
+sheet behind a "Targets" link on the ring card, keeping the main screen
+uncluttered. Calorie/protein trend charts still appear below once there's
+2+ days of history. Targets and entries both sync to Firestore the same way
+as the rest of the app's data.
 
 ## Scan Food or Label (AI)
 
@@ -184,10 +195,10 @@ automatically — you always review the pre-filled numbers before logging.
   (not a secret — replace the placeholder with your deployed Worker's URL).
 - `src/hooks/useFoodScan.js` — converts the photo to a data URL, POSTs it to
   the Worker, and surfaces loading/error state.
-- `src/screens/Nutrition.jsx` — the "Scan Food or Label" button opens the
-  device camera (`capture="environment"`), and a successful scan pre-fills
-  the label/calorie/protein/carbs/fat/fiber fields based on whichever mode
-  the model detected.
+- `src/screens/Nutrition.jsx` — the "Scan Food or Label" button (inside the
+  Add Food sheet) opens the device camera (`capture="environment"`), and a
+  successful scan pre-fills the label/calorie/protein/carbs/fat/fiber
+  fields based on whichever mode the model detected.
 
 To point this at your own Worker: deploy `cloudflare/food-scan-worker.js` to
 Cloudflare Workers, set `OPENROUTER_API_KEY` as an encrypted secret in the

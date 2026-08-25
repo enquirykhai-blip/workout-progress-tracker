@@ -13,6 +13,22 @@
   --accent-dim: rgba(255, 59, 92, 0.16);
   --accent-glow: rgba(255, 59, 92, 0.45);
   --success: #32d74b;
+  --macro-carbs: #ff9f0a;
+  --macro-carbs-dim: rgba(255, 159, 10, 0.18);
+  --macro-protein: #0a84ff;
+  --macro-protein-dim: rgba(10, 132, 255, 0.18);
+  --macro-fat: #bf5af2;
+  --macro-fat-dim: rgba(191, 90, 242, 0.18);
+  --macro-fiber: #30d158;
+  --macro-fiber-dim: rgba(48, 209, 88, 0.18);
+  --meal-breakfast: #ff9f0a;
+  --meal-breakfast-dim: rgba(255, 159, 10, 0.18);
+  --meal-lunch: #30d158;
+  --meal-lunch-dim: rgba(48, 209, 88, 0.18);
+  --meal-dinner: #0a84ff;
+  --meal-dinner-dim: rgba(10, 132, 255, 0.18);
+  --meal-snack: #ff3b5c;
+  --meal-snack-dim: rgba(255, 59, 92, 0.18);
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
@@ -650,19 +666,6 @@ input::placeholder, textarea::placeholder {
   letter-spacing: 0.04em;
 }
 
-.macro-stat-row {
-  margin: 14px 0;
-}
-
-.macro-stat-row .stat-tile .value {
-  font-size: 17px;
-  font-variant-numeric: tabular-nums;
-}
-
-.macro-stat-row .ring-target {
-  font-size: 11px;
-}
-
 .chip-row {
   display: flex;
   gap: 8px;
@@ -902,55 +905,175 @@ input::placeholder, textarea::placeholder {
   font-variant-numeric: tabular-nums;
 }
 
-.nutrition-rings-card {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  padding: 24px 16px;
-}
-
-.ring-block {
+.nutri-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  padding: 28px 16px 22px;
 }
 
-.ring-block svg {
-  margin-bottom: 4px;
+.nutri-hero-ring {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.ring-value {
-  font-size: 19px;
+.nutri-hero-ring-center {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.nutri-hero-ring-value {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.nutri-hero-ring-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.nutri-hero-eaten {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  margin-top: 14px;
+}
+
+.macro-pill-row {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.macro-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+
+.macro-pill-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.macro-pill-value {
+  font-size: 13.5px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
-.ring-target {
-  font-size: 13px;
+.macro-pill-value span {
   font-weight: 500;
   color: var(--text-tertiary);
 }
 
-.ring-label {
-  font-size: 11px;
-  font-weight: 600;
+.macro-pill-label {
+  font-size: 10.5px;
   color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+}
+
+.meal-group {
+  margin-bottom: 18px;
+}
+
+.meal-group-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.meal-icon-bubble {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.meal-group-name {
+  flex: 1;
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+.meal-group-total {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.nutri-fab {
+  position: fixed;
+  right: 20px;
+  bottom: calc(90px + var(--safe-bottom));
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 26px var(--accent-glow);
+  z-index: 46;
+}
+
+.nutri-fab svg {
+  width: 24px;
+  height: 24px;
 }
 
 .nutrition-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 10px;
   padding: 12px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .nutrition-row:last-child {
   border-bottom: none;
+}
+
+.nutrition-row-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.nutrition-row-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .nutrition-row-label {

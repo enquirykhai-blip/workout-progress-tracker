@@ -2,13 +2,35 @@ import { useRef, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { todayISO, formatDisplayDate, formatShortDate } from "../utils/date";
 import { makeId } from "../utils/id";
-import { entriesForDate, totalsForDate, dailyTotalsSeries } from "../utils/nutritionOps";
+import {
+  totalsForDate,
+  dailyTotalsSeries,
+  groupEntriesByMealType,
+  MEAL_TYPES,
+  MEAL_TYPE_META,
+  currentMealType,
+} from "../utils/nutritionOps";
 import { useFoodScan } from "../hooks/useFoodScan";
-import { IconClose, IconCamera } from "../components/icons";
+import { IconClose, IconCamera, IconPlus } from "../components/icons";
+import Sheet from "../components/Sheet";
 
 const DEFAULT_TARGETS = { calories: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30 };
 
-function ProgressRing({ value, target, size = 104, stroke = 10 }) {
+const MEAL_COLORS = {
+  breakfast: { color: "var(--meal-breakfast)", dim: "var(--meal-breakfast-dim)" },
+  lunch: { color: "var(--meal-lunch)", dim: "var(--meal-lunch-dim)" },
+  dinner: { color: "var(--meal-dinner)", dim: "var(--meal-dinner-dim)" },
+  snack: { color: "var(--meal-snack)", dim: "var(--meal-snack-dim)" },
+};
+
+const MACRO_COLORS = {
+  carbs: { color: "var(--macro-carbs)", dim: "var(--macro-carbs-dim)" },
+  protein: { color: "var(--macro-protein)", dim: "var(--macro-protein-dim)" },
+  fat: { color: "var(--macro-fat)", dim: "var(--macro-fat-dim)" },
+  fiber: { color: "var(--macro-fiber)", dim: "var(--macro-fiber-dim)" },
+};
+
+function ProgressRing({ value, target, size = 104, stroke = 10, color = "var(--accent)" }) {
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const pct = target > 0 ? Math.min(value / target, 1) : 0;
@@ -21,7 +43,7 @@ function ProgressRing({ value, target, size = 104, stroke = 10 }) {
         cy={size / 2}
         r={radius}
         fill="none"
-        stroke="var(--accent)"
+        stroke={color}
         strokeWidth={stroke}
         strokeLinecap="round"
         strokeDasharray={circumference}
@@ -30,6 +52,38 @@ function ProgressRing({ value, target, size = 104, stroke = 10 }) {
         style={{ transition: "stroke-dashoffset 0.4s ease" }}
       />
     </svg>
+  );
+}
+
+function MacroPill({ macro, label, value, target }) {
+  const { color, dim } = MACRO_COLORS[macro];
+  return (
+    <div className="macro-pill">
+      <div className="macro-pill-icon" style={{ background: dim, color }}>
+        <svg width={14} height={14} viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="4" />
+          <circle
+            cx="18"
+            cy="18"
+            r="15"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeDasharray={2 * Math.PI * 15}
+            strokeDashoffset={2 * Math.PI * 15 * (1 - (target > 0 ? Math.min(value / target, 1) : 0))}
+            transform="rotate(-90 18 18)"
+          />
+        </svg>
+      </div>
+      <div>
+        <div className="macro-pill-value">
+          {value}
+          <span>/{target}g</span>
+        </div>
+        <div className="macro-pill-label">{label}</div>
+      </div>
+    </div>
   );
 }
 
@@ -65,11 +119,14 @@ function macroDetail(e) {
 
 export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry, onUpdateTargets }) {
   const date = todayISO();
-  const todays = entriesForDate(entries, date);
   const totals = totalsForDate(entries, date);
   // Older saved targets may predate carbs/fat/fiber tracking — fill in sane defaults.
   const t = { ...DEFAULT_TARGETS, ...targets };
+  const mealGroups = groupEntriesByMealType(entries, date);
 
+  const [addOpen, setAddOpen] = useState(false);
+  const [targetsOpen, setTargetsOpen] = useState(false);
+  const [mealType, setMealType] = useState(() => currentMealType());
   const [label, setLabel] = useState("");
   const [calories, setCalories] = useState("");
   const [protein, setProtein] = useState("");
@@ -97,7 +154,17 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     const ft = toIntOrNull(fat);
     const fib = toIntOrNull(fiber);
     if (cals == null && prot == null && carb == null && ft == null && fib == null) return;
-    onAddEntry({ id: makeId(), date, label: label.trim(), calories: cals, protein: prot, carbs: carb, fat: ft, fiber: fib });
+    onAddEntry({
+      id: makeId(),
+      date,
+      label: label.trim(),
+      calories: cals,
+      protein: prot,
+      carbs: carb,
+      fat: ft,
+      fiber: fib,
+      mealType,
+    });
     setLabel("");
     setCalories("");
     setProtein("");
@@ -106,6 +173,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     setFiber("");
     setScanConfidence(null);
     setScanSource(null);
+    setAddOpen(false);
   }
 
   async function handlePhotoSelected(e) {
@@ -138,6 +206,8 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
   const allFieldsBlank = calories === "" && protein === "" && carbs === "" && fat === "" && fiber === "";
   const series = dailyTotalsSeries(entries).map((d) => ({ ...d, dateLabel: formatShortDate(d.date) }));
+  const over = totals.calories > t.calories;
+  const heroValue = over ? totals.calories - t.calories : Math.max(t.calories - totals.calories, 0);
 
   return (
     <div className="screen">
@@ -147,226 +217,71 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
         <p className="subtitle">{formatDisplayDate(date)}</p>
       </div>
 
-      <div className="card nutrition-rings-card">
-        <div className="ring-block">
-          <ProgressRing value={totals.calories} target={t.calories} />
-          <div className="ring-value">
-            {totals.calories}
-            <span className="ring-target"> / {t.calories}</span>
-          </div>
-          <div className="ring-label">kcal</div>
-        </div>
-        <div className="ring-block">
-          <ProgressRing value={totals.protein} target={t.protein} />
-          <div className="ring-value">
-            {totals.protein}
-            <span className="ring-target"> / {t.protein}</span>
-          </div>
-          <div className="ring-label">protein (g)</div>
-        </div>
-      </div>
-
-      <div className="stat-row macro-stat-row">
-        <div className="stat-tile">
-          <div className="value">
-            {totals.carbs}
-            <span className="ring-target"> /{t.carbs}</span>
-          </div>
-          <div className="label">Carbs (g)</div>
-        </div>
-        <div className="stat-tile">
-          <div className="value">
-            {totals.fat}
-            <span className="ring-target"> /{t.fat}</span>
-          </div>
-          <div className="label">Fat (g)</div>
-        </div>
-        <div className="stat-tile">
-          <div className="value">
-            {totals.fiber}
-            <span className="ring-target"> /{t.fiber}</span>
-          </div>
-          <div className="label">Fiber (g)</div>
-        </div>
-      </div>
-
-      <div className="card">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          style={{ display: "none" }}
-          onChange={handlePhotoSelected}
-        />
+      <div className="card nutri-hero" style={{ position: "relative" }}>
         <button
-          className="btn btn-secondary btn-block"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={scanning}
-          style={{ marginBottom: 14 }}
+          className="btn btn-ghost"
+          style={{ position: "absolute", top: 14, right: 14, minHeight: 28, padding: "4px 10px", fontSize: 12 }}
+          onClick={() => setTargetsOpen(true)}
         >
-          <IconCamera width={16} height={16} />
-          {scanning ? "Analyzing photo..." : "Scan Food or Label"}
+          Targets
         </button>
-
-        {scanError && (
-          <p className="scan-error" onClick={clearScanError}>
-            {scanError}
-          </p>
-        )}
-
-        {scanConfidence && !scanError && (
-          <p className="scan-note">
-            {scanSource === "label"
-              ? "Read from the nutrition label — double-check it matches your serving before saving."
-              : `AI estimate (${scanConfidence} confidence) — review the numbers below before saving.`}
-          </p>
-        )}
-
-        <div className="form-row">
-          <div className="form-field">
-            <label>Calories</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="0"
-              value={calories}
-              onChange={(e) => setCalories(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-          </div>
-          <div className="form-field">
-            <label>Protein (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="0"
-              value={protein}
-              onChange={(e) => setProtein(e.target.value.replace(/[^0-9]/g, ""))}
-            />
+        <div className="nutri-hero-ring">
+          <ProgressRing value={totals.calories} target={t.calories} size={168} stroke={14} />
+          <div className="nutri-hero-ring-center">
+            <div className="nutri-hero-ring-value">{heroValue}</div>
+            <div className="nutri-hero-ring-label">{over ? "kcal over" : "kcal left"}</div>
           </div>
         </div>
-        <div className="form-row">
-          <div className="form-field">
-            <label>Carbs (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="0"
-              value={carbs}
-              onChange={(e) => setCarbs(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-          </div>
-          <div className="form-field">
-            <label>Fat (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="0"
-              value={fat}
-              onChange={(e) => setFat(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-          </div>
+        <div className="nutri-hero-eaten">
+          {totals.calories} / {t.calories} kcal eaten today
         </div>
-        <div className="form-row">
-          <div className="form-field">
-            <label>Fiber (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              placeholder="0"
-              value={fiber}
-              onChange={(e) => setFiber(e.target.value.replace(/[^0-9]/g, ""))}
-            />
-          </div>
-          <div className="form-field">
-            <label>Label (optional)</label>
-            <input type="text" placeholder="e.g. Breakfast" value={label} onChange={(e) => setLabel(e.target.value)} />
-          </div>
+
+        <div className="macro-pill-row">
+          <MacroPill macro="carbs" label="Carbs" value={totals.carbs} target={t.carbs} />
+          <MacroPill macro="protein" label="Protein" value={totals.protein} target={t.protein} />
         </div>
-        <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={allFieldsBlank}>
-          Add Entry
-        </button>
+        <div className="macro-pill-row" style={{ marginTop: 0 }}>
+          <MacroPill macro="fat" label="Fat" value={totals.fat} target={t.fat} />
+          <MacroPill macro="fiber" label="Fiber" value={totals.fiber} target={t.fiber} />
+        </div>
       </div>
 
-      {todays.length > 0 && (
-        <>
-          <div className="section-label">Today's Entries</div>
-          <div className="card">
-            {todays.map((e) => (
-              <div className="nutrition-row" key={e.id}>
-                <div>
-                  <div className="nutrition-row-label">{e.label || "Entry"}</div>
-                  <div className="nutrition-row-detail">{macroDetail(e)}</div>
+      {mealGroups.length > 0 ? (
+        mealGroups.map((group) => {
+          const { color, dim } = MEAL_COLORS[group.type];
+          return (
+            <div className="meal-group" key={group.type}>
+              <div className="meal-group-header">
+                <div className="meal-icon-bubble" style={{ background: dim, color }}>
+                  {group.emoji}
                 </div>
-                <button className="set-delete-btn" onClick={() => onDeleteEntry(e.id)} aria-label="Delete entry">
-                  <IconClose width={14} height={14} />
-                </button>
+                <div className="meal-group-name">{group.label}</div>
+                <div className="meal-group-total">{group.totalCalories} kcal</div>
               </div>
-            ))}
-          </div>
-        </>
+              <div className="card">
+                {group.entries.map((e) => (
+                  <div className="nutrition-row" key={e.id}>
+                    <div className="nutrition-row-icon" style={{ background: dim, color }}>
+                      {group.emoji}
+                    </div>
+                    <div className="nutrition-row-main">
+                      <div className="nutrition-row-label">{e.label || group.label}</div>
+                      <div className="nutrition-row-detail">{macroDetail(e)}</div>
+                    </div>
+                    <button className="set-delete-btn" onClick={() => onDeleteEntry(e.id)} aria-label="Delete entry">
+                      <IconClose width={14} height={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        <div className="card" style={{ textAlign: "center", padding: "28px 16px", color: "var(--text-secondary)", fontSize: 13.5 }}>
+          Nothing logged yet today — tap + to add a meal.
+        </div>
       )}
-
-      <div className="section-label">Daily Targets</div>
-      <div className="card">
-        <div className="form-row">
-          <div className="form-field">
-            <label>Calories</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={targetCalories}
-              onChange={(e) => setTargetCalories(e.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={handleTargetBlur}
-            />
-          </div>
-          <div className="form-field">
-            <label>Protein (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={targetProtein}
-              onChange={(e) => setTargetProtein(e.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={handleTargetBlur}
-            />
-          </div>
-        </div>
-        <div className="form-row" style={{ marginBottom: 0 }}>
-          <div className="form-field">
-            <label>Carbs (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={targetCarbs}
-              onChange={(e) => setTargetCarbs(e.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={handleTargetBlur}
-            />
-          </div>
-          <div className="form-field">
-            <label>Fat (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={targetFat}
-              onChange={(e) => setTargetFat(e.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={handleTargetBlur}
-            />
-          </div>
-        </div>
-        <div className="form-row" style={{ marginTop: 12, marginBottom: 0 }}>
-          <div className="form-field">
-            <label>Fiber (g)</label>
-            <input
-              type="text"
-              inputMode="numeric"
-              value={targetFiber}
-              onChange={(e) => setTargetFiber(e.target.value.replace(/[^0-9]/g, ""))}
-              onBlur={handleTargetBlur}
-            />
-          </div>
-          <div className="form-field" />
-        </div>
-      </div>
 
       {series.length >= 2 && (
         <>
@@ -391,11 +306,194 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
                 <XAxis dataKey="dateLabel" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={34} />
                 <Tooltip content={<ChartTooltip unit="g" />} />
-                <Line type="monotone" dataKey="protein" stroke="var(--accent)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                <Line type="monotone" dataKey="protein" stroke="var(--macro-protein)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--macro-protein)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </>
+      )}
+
+      <button className="nutri-fab" onClick={() => setAddOpen(true)} aria-label="Add food">
+        <IconPlus />
+      </button>
+
+      {addOpen && (
+        <Sheet
+          title="Add Food"
+          onClose={() => setAddOpen(false)}
+          footer={
+            <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={allFieldsBlank}>
+              Add Entry
+            </button>
+          }
+        >
+          <div className="chip-row" style={{ marginBottom: 14 }}>
+            {MEAL_TYPES.map((type) => (
+              <button
+                key={type}
+                className={`chip${mealType === type ? " active" : ""}`}
+                onClick={() => setMealType(type)}
+              >
+                {MEAL_TYPE_META[type].emoji} {MEAL_TYPE_META[type].label}
+              </button>
+            ))}
+          </div>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: "none" }}
+            onChange={handlePhotoSelected}
+          />
+          <button
+            className="btn btn-secondary btn-block"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={scanning}
+            style={{ marginBottom: 14 }}
+          >
+            <IconCamera width={16} height={16} />
+            {scanning ? "Analyzing photo..." : "Scan Food or Label"}
+          </button>
+
+          {scanError && (
+            <p className="scan-error" onClick={clearScanError}>
+              {scanError}
+            </p>
+          )}
+
+          {scanConfidence && !scanError && (
+            <p className="scan-note">
+              {scanSource === "label"
+                ? "Read from the nutrition label — double-check it matches your serving before saving."
+                : `AI estimate (${scanConfidence} confidence) — review the numbers below before saving.`}
+            </p>
+          )}
+
+          <div className="form-row">
+            <div className="form-field">
+              <label>Calories</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={calories}
+                onChange={(e) => setCalories(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </div>
+            <div className="form-field">
+              <label>Protein (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={protein}
+                onChange={(e) => setProtein(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Carbs (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={carbs}
+                onChange={(e) => setCarbs(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </div>
+            <div className="form-field">
+              <label>Fat (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={fat}
+                onChange={(e) => setFat(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </div>
+          </div>
+          <div className="form-row" style={{ marginBottom: 0 }}>
+            <div className="form-field">
+              <label>Fiber (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                placeholder="0"
+                value={fiber}
+                onChange={(e) => setFiber(e.target.value.replace(/[^0-9]/g, ""))}
+              />
+            </div>
+            <div className="form-field">
+              <label>Label (optional)</label>
+              <input type="text" placeholder="e.g. Chicken Rice" value={label} onChange={(e) => setLabel(e.target.value)} />
+            </div>
+          </div>
+        </Sheet>
+      )}
+
+      {targetsOpen && (
+        <Sheet title="Daily Targets" onClose={() => setTargetsOpen(false)}>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Calories</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={targetCalories}
+                onChange={(e) => setTargetCalories(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={handleTargetBlur}
+              />
+            </div>
+            <div className="form-field">
+              <label>Protein (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={targetProtein}
+                onChange={(e) => setTargetProtein(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={handleTargetBlur}
+              />
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-field">
+              <label>Carbs (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={targetCarbs}
+                onChange={(e) => setTargetCarbs(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={handleTargetBlur}
+              />
+            </div>
+            <div className="form-field">
+              <label>Fat (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={targetFat}
+                onChange={(e) => setTargetFat(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={handleTargetBlur}
+              />
+            </div>
+          </div>
+          <div className="form-row" style={{ marginBottom: 0 }}>
+            <div className="form-field">
+              <label>Fiber (g)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={targetFiber}
+                onChange={(e) => setTargetFiber(e.target.value.replace(/[^0-9]/g, ""))}
+                onBlur={handleTargetBlur}
+              />
+            </div>
+            <div className="form-field" />
+          </div>
+        </Sheet>
       )}
     </div>
   );
