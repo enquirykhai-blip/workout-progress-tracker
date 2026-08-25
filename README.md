@@ -39,9 +39,12 @@ via Firebase (Firestore + email/password auth) when signed in.
   (multiple a day, e.g. per meal), see today's totals against daily targets
   as progress rings (calories/protein) plus a compact macro stat row
   (carbs/fat/fiber), and view calorie/protein trend charts over time.
-- **Scan Food Photo** — take/upload a food photo and an AI vision model
-  estimates calories, protein, carbs, fat, and fiber, pre-filling the entry
-  for you to review and adjust before saving.
+- **Scan Food or Label** — take/upload a photo of either plated food or a
+  packaged item's printed nutrition facts label. An AI vision model tells
+  the two apart: for a label it reads the exact printed calories, protein,
+  carbs, fat, and fiber for one serving; for a food photo it visually
+  estimates the same five values. Either way the entry is pre-filled for
+  you to review and adjust before saving.
 
 ## Data & Sync
 
@@ -141,7 +144,7 @@ saved targets that predate carbs/fat/fiber fall back to sane defaults —
 history. Targets and entries both sync to Firestore the same way as the
 rest of the app's data.
 
-## Scan Food Photo (AI)
+## Scan Food or Label (AI)
 
 The app is a static site with no server of its own, and an AI vision API key
 can never safely live in client-side code — anyone could open DevTools and
@@ -153,8 +156,25 @@ phone camera → app (src/hooks/useFoodScan.js)
              → Cloudflare Worker (cloudflare/food-scan-worker.js, holds the
                OpenRouter key as an encrypted secret, never in this repo)
              → OpenRouter → a vision model
-             → structured { label, calories, protein, confidence } back to the app
+             → structured { label, calories, protein, carbs, fat, fiber,
+               confidence, source } back to the app
 ```
+
+The Worker's prompt asks the model to first decide what it's looking at:
+
+- **A printed nutrition facts label** on packaging — the model reads the
+  exact stated calories/protein/carbs/fat/fiber for one serving straight off
+  the label text (no guessing), and the response comes back with
+  `source: "label"` and `confidence: "high"`.
+- **A plain food photo** with no label — the model visually estimates the
+  same five values for the portion shown, and the response comes back with
+  `source: "estimate"` and a confidence that reflects how sure it is.
+
+`src/screens/Nutrition.jsx` uses `source` to show a different note after a
+scan: "Read from the nutrition label — double-check it matches your
+serving" for a label read, versus "AI estimate (_confidence_) — review the
+numbers below" for a visual estimate. Either way, nothing is saved
+automatically — you always review the pre-filled numbers before logging.
 
 - `cloudflare/food-scan-worker.js` — reference copy of the Worker's source.
   The real deploy target is the Cloudflare dashboard, not this repo; paste
@@ -164,10 +184,10 @@ phone camera → app (src/hooks/useFoodScan.js)
   (not a secret — replace the placeholder with your deployed Worker's URL).
 - `src/hooks/useFoodScan.js` — converts the photo to a data URL, POSTs it to
   the Worker, and surfaces loading/error state.
-- `src/screens/Nutrition.jsx` — the "Scan Food Photo" button opens the
+- `src/screens/Nutrition.jsx` — the "Scan Food or Label" button opens the
   device camera (`capture="environment"`), and a successful scan pre-fills
-  the calorie/protein/label fields — it never saves automatically, so you
-  always get to review the AI's estimate before it's logged.
+  the label/calorie/protein/carbs/fat/fiber fields based on whichever mode
+  the model detected.
 
 To point this at your own Worker: deploy `cloudflare/food-scan-worker.js` to
 Cloudflare Workers, set `OPENROUTER_API_KEY` as an encrypted secret in the

@@ -1,4 +1,4 @@
-// Cloudflare Worker — food photo → estimated macros via OpenRouter.
+// Cloudflare Worker — food photo OR nutrition label → macros via OpenRouter.
 //
 // This exists purely as a reference copy for the repo; the actual deploy
 // target is the Cloudflare dashboard (Workers & Pages), not this file. Paste
@@ -8,8 +8,14 @@
 // this Worker's URL, and this Worker is the only thing that talks to
 // OpenRouter.
 //
+// The same endpoint handles two kinds of photo: a plated/prepared food shot
+// (macros are visually estimated) and a printed nutrition facts label on
+// packaging (macros are read verbatim off the label instead of guessed) —
+// the model decides which one it's looking at and reports which it did via
+// `source`, so the client can show "read from label" vs "AI estimate".
+//
 // Request:  POST { image: "data:image/jpeg;base64,..." }
-// Response: { label, calories, protein, carbs, fat, fiber, confidence } or { error }
+// Response: { label, calories, protein, carbs, fat, fiber, confidence, source } or { error }
 
 const ALLOWED_ORIGIN = "https://enquirykhai-blip.github.io";
 // NOTE: set this to whatever model slug is confirmed working on your deployed
@@ -84,13 +90,21 @@ export default {
                 {
                   type: "text",
                   text:
-                    "You are a nutrition estimator. Look at this food photo and estimate, for the " +
-                    "visible portion: calories, and protein/carbohydrates/fat/fiber in grams. " +
+                    "You are a nutrition estimator. This image is either (a) a printed nutrition " +
+                    "facts / nutrition information label from food packaging, or (b) a photo of " +
+                    "prepared or plated food with no label. Decide which. If it's a label: read the " +
+                    "exact stated calories, protein, carbohydrates, fat, and fiber directly from the " +
+                    "label text for ONE serving, using the serving size printed on the label — do not " +
+                    "estimate, use the printed numbers, and set confidence to \"high\". If it's a food " +
+                    "photo with no label: visually estimate calories and protein/carbohydrates/fat/fiber " +
+                    "in grams for the visible portion, and set confidence based on how certain you are. " +
                     "Reply with ONLY raw JSON, no markdown, no explanation, in exactly this shape: " +
-                    '{"label": "short food name", "calories": <integer>, "protein": <integer>, ' +
+                    '{"label": "short food or product name", "calories": <integer>, "protein": <integer>, ' +
                     '"carbs": <integer>, "fat": <integer>, "fiber": <integer>, ' +
-                    '"confidence": "low" | "medium" | "high"}. If the image does not contain food, ' +
-                    'reply {"label": "", "calories": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0, "confidence": "low"}.',
+                    '"confidence": "low" | "medium" | "high", "source": "label" | "estimate"}. If the ' +
+                    "image contains neither food nor a nutrition label, reply " +
+                    '{"label": "", "calories": 0, "protein": 0, "carbs": 0, "fat": 0, "fiber": 0, ' +
+                    '"confidence": "low", "source": "estimate"}.',
                 },
                 { type: "image_url", image_url: { url: image } },
               ],
@@ -127,6 +141,7 @@ export default {
       fat: Math.max(0, Math.round(Number(parsed.fat) || 0)),
       fiber: Math.max(0, Math.round(Number(parsed.fiber) || 0)),
       confidence: ["low", "medium", "high"].includes(parsed.confidence) ? parsed.confidence : "low",
+      source: ["label", "estimate"].includes(parsed.source) ? parsed.source : "estimate",
     });
   },
 };

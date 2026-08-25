@@ -82,6 +82,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
   const [targetFat, setTargetFat] = useState(String(t.fat));
   const [targetFiber, setTargetFiber] = useState(String(t.fiber));
   const [scanConfidence, setScanConfidence] = useState(null);
+  const [scanSource, setScanSource] = useState(null);
   const fileInputRef = useRef(null);
   const { scan, scanning, error: scanError, clearError: clearScanError } = useFoodScan();
 
@@ -104,6 +105,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     setFat("");
     setFiber("");
     setScanConfidence(null);
+    setScanSource(null);
   }
 
   async function handlePhotoSelected(e) {
@@ -111,6 +113,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     e.target.value = ""; // allow picking the same file again later
     if (!file) return;
     setScanConfidence(null);
+    setScanSource(null);
     const result = await scan(file);
     if (!result) return;
     if (result.label) setLabel(result.label);
@@ -120,6 +123,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     if (result.fat != null) setFat(String(result.fat));
     if (result.fiber != null) setFiber(String(result.fiber));
     setScanConfidence(result.confidence);
+    setScanSource(result.source || "estimate");
   }
 
   function handleTargetBlur() {
@@ -202,7 +206,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
           style={{ marginBottom: 14 }}
         >
           <IconCamera width={16} height={16} />
-          {scanning ? "Analyzing photo..." : "Scan Food Photo"}
+          {scanning ? "Analyzing photo..." : "Scan Food or Label"}
         </button>
 
         {scanError && (
@@ -213,7 +217,9 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
         {scanConfidence && !scanError && (
           <p className="scan-note">
-            AI estimate ({scanConfidence} confidence) — review the numbers below before saving.
+            {scanSource === "label"
+              ? "Read from the nutrition label — double-check it matches your serving before saving."
+              : `AI estimate (${scanConfidence} confidence) — review the numbers below before saving.`}
           </p>
         )}
 
