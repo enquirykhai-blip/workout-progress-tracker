@@ -218,9 +218,12 @@ automatically — you always review the pre-filled numbers before logging.
 - `src/screens/Nutrition.jsx` — inside the Add Food sheet, the "What did you
   eat?" field doubles as both the entry's label and the text sent to
   "Estimate with AI" (disabled until you type something); "Scan Photo/Label"
-  next to it opens the device camera (`capture="environment"`) for the
-  image path instead. Either one pre-fills the label/calorie/protein/carbs/
-  fat/fiber fields for you to review before saving.
+  next to it opens a plain `<input type="file" accept="image/*">` for the
+  image path instead — deliberately without a `capture` attribute, so the
+  device shows its normal picker (camera **or** photo gallery/library)
+  rather than forcing the camera open directly. Either one pre-fills the
+  label/calorie/protein/carbs/fat/fiber fields for you to review before
+  saving.
 
 To point this at your own Worker: deploy `cloudflare/food-scan-worker.js` to
 Cloudflare Workers, set `OPENROUTER_API_KEY` as an encrypted secret in the

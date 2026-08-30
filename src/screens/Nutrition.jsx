@@ -348,7 +348,6 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            capture="environment"
             style={{ display: "none" }}
             onChange={handlePhotoSelected}
           />
