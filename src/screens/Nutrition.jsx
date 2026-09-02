@@ -11,6 +11,7 @@ import {
   currentMealType,
 } from "../utils/nutritionOps";
 import { useFoodScan } from "../hooks/useFoodScan";
+import { parseMacrosFromText } from "../utils/parseMacros";
 import { IconClose, IconCamera, IconPlus } from "../components/icons";
 import Sheet from "../components/Sheet";
 
@@ -125,6 +126,10 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
   const [targetFiber, setTargetFiber] = useState(String(t.fiber));
   const [scanConfidence, setScanConfidence] = useState(null);
   const [scanSource, setScanSource] = useState(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteText, setPasteText] = useState("");
+  const [pasteNote, setPasteNote] = useState("");
+  const [pasteNoteIsError, setPasteNoteIsError] = useState(false);
   const fileInputRef = useRef(null);
   const { scan, estimateFromText, scanning, error: scanError, clearError: clearScanError } = useFoodScan();
 
@@ -158,6 +163,8 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     setFiber("");
     setScanConfidence(null);
     setScanSource(null);
+    setPasteNote("");
+    setPasteOpen(false);
     setAddOpen(false);
   }
 
@@ -167,6 +174,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     if (!file) return;
     setScanConfidence(null);
     setScanSource(null);
+    setPasteNote("");
     const result = await scan(file);
     if (!result) return;
     if (result.label) setLabel(result.label);
@@ -184,6 +192,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     if (!description) return;
     setScanConfidence(null);
     setScanSource(null);
+    setPasteNote("");
     const result = await estimateFromText(description);
     if (!result) return;
     if (result.label) setLabel(result.label);
@@ -194,6 +203,28 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     if (result.fiber != null) setFiber(String(result.fiber));
     setScanConfidence(result.confidence);
     setScanSource(result.source || "estimate");
+  }
+
+  function handleParsePaste() {
+    const found = parseMacrosFromText(pasteText);
+    const keys = Object.keys(found);
+    if (keys.length === 0) {
+      setPasteNoteIsError(true);
+      setPasteNote("Couldn't find any macro numbers in that text — try a different format, or fill in the fields manually below.");
+      return;
+    }
+    if (found.calories != null) setCalories(String(found.calories));
+    if (found.protein != null) setProtein(String(found.protein));
+    if (found.carbs != null) setCarbs(String(found.carbs));
+    if (found.fat != null) setFat(String(found.fat));
+    if (found.fiber != null) setFiber(String(found.fiber));
+    setScanConfidence(null);
+    setScanSource(null);
+    clearScanError();
+    setPasteNoteIsError(false);
+    setPasteNote(`Filled ${keys.length}/5 fields from the pasted text — review the numbers below before saving.`);
+    setPasteText("");
+    setPasteOpen(false);
   }
 
   function handleTargetBlur() {
@@ -371,6 +402,38 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
             </button>
           </div>
 
+          <button
+            className="btn btn-ghost btn-block"
+            style={{ marginBottom: pasteOpen ? 10 : 14, justifyContent: "flex-start", padding: "4px 2px", minHeight: 28 }}
+            onClick={() => {
+              setPasteOpen((v) => !v);
+              setPasteNote("");
+            }}
+          >
+            {pasteOpen ? "Cancel pasting macro info" : "Or paste macro info from a label or app"}
+          </button>
+
+          {pasteOpen && (
+            <div style={{ marginBottom: 14 }}>
+              <textarea
+                className="note-input"
+                style={{ marginTop: 0, minHeight: 80 }}
+                placeholder={"Paste nutrition text here, e.g.\nEnergy 250kcal, Protein 10g, Carbohydrate 30g, Fat 8g, Fiber 2g"}
+                value={pasteText}
+                onChange={(e) => setPasteText(e.target.value)}
+                autoFocus
+              />
+              <button
+                className="btn btn-secondary btn-block"
+                style={{ marginTop: 10 }}
+                onClick={handleParsePaste}
+                disabled={!pasteText.trim()}
+              >
+                Fill Fields From Pasted Text
+              </button>
+            </div>
+          )}
+
           {scanError && (
             <p className="scan-error" onClick={clearScanError}>
               {scanError}
@@ -382,6 +445,12 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
               {scanSource === "label"
                 ? "Read from the nutrition label — double-check it matches your serving before saving."
                 : `AI estimate (${scanConfidence} confidence) — review the numbers below before saving.`}
+            </p>
+          )}
+
+          {pasteNote && (
+            <p className={pasteNoteIsError ? "scan-error" : "scan-note"} onClick={() => setPasteNote("")}>
+              {pasteNote}
             </p>
           )}
 

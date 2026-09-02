@@ -55,6 +55,11 @@ an afterthought, alongside the workout split.
   printed calories/protein/carbs/fat/fiber for one serving; for a food photo
   or a typed description it estimates the same five values. Either way the
   entry is pre-filled for you to review and adjust before saving.
+- **Paste macro info** — already have the exact numbers (copied from a food
+  package, a nutrition website, or another tracking app)? Paste the text in
+  and the app parses out calories/protein/carbs/fat/fiber itself — no AI
+  call, no network, just local text matching, since the numbers are already
+  exact and there's nothing to estimate.
 
 ## Data & Sync
 
@@ -230,6 +235,27 @@ Cloudflare Workers, set `OPENROUTER_API_KEY` as an encrypted secret in the
 Worker's settings (Settings → Variables and Secrets → Secret, never a
 plaintext variable), and update `FOOD_SCAN_WORKER_URL` in `src/aiConfig.js`
 to the deployed Worker's `*.workers.dev` URL.
+
+## Paste Macro Info
+
+Sometimes you already have the exact numbers — copied from a food package's
+back-of-box text, a nutrition site, or another tracking app — and there's
+nothing to scan or estimate, just numbers to get into the form. `src/utils/
+parseMacros.js` exports `parseMacrosFromText(text)`, a small set of regexes
+(no AI, no network) that pull calories/protein/carbs/fat/fiber out of free-
+form pasted text, matching common English and Malay label wording (Energy/
+Tenaga/Kalori, Protein, Carbohydrate/Karbohidrat, Fat/Lemak, Fiber/Serat) and
+tolerating things like `<1g`, decimals, and either a colon or a bare space
+before the number. It returns only the fields it actually found a number
+for, so a partial match doesn't clobber fields the user already filled in
+some other way.
+
+In the Add Food sheet, "Or paste macro info from a label or app" reveals a
+textarea and a "Fill Fields From Pasted Text" button. A successful parse
+fills in whatever fields it found, shows a "Filled X/5 fields — review
+before saving" note, and closes the textarea; if nothing matched, it shows
+an error note and leaves the textarea open (and any already-filled fields
+untouched) so the user can try a different format instead.
 
 ## Development
 
