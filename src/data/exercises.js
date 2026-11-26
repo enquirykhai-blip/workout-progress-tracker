@@ -1,14 +1,15 @@
 // Weekly program, following the "Start Gym" plan: 5 training days
-// (Selasa–Sabtu), every exercise 4 sets × 15 reps — set 1 is a light warm-up,
-// sets 2-4 are working sets taken to failure.
+// (Selasa–Sabtu), every exercise 2 sets × 15 reps, both working sets taken
+// to failure (warm up lightly before set 1).
 //
 // Each entry carries the muscle it targets (`target`) and whether it's a
 // compound or isolation movement (`kind`). A few ids are reused from the old
 // split (skull-crusher, rope-pushdown, single-arm-row, ohd-tricep-ext) so
 // their logged history and PRs carry over.
 
-const SETS = 4;
-const REPS = "15";
+export const SETS = 2;
+export const REPS = "15";
+export const VOLUME_LABEL = `${SETS} × ${REPS}`;
 
 function ex(id, name, target, kind) {
   return { id, name, target, kind };
@@ -68,14 +69,14 @@ export const PROGRAM = Object.fromEntries(
   ])
 );
 
-// Set 1 is the warm-up set; the rest are working sets.
-export const WARMUP_SETS = 1;
+// Number of leading sets shown as warm-up ("W"). 0 = every set is a working set.
+export const WARMUP_SETS = 0;
 
 // Shared "Start Gym" guideline, shown on every training day.
 export const GUIDELINE = [
-  { title: "Warm Up (Set #1)", body: "Ringan – pastikan muscle tersebut gerak." },
-  { title: "Working Set (Set #2, #3, #4)", body: "Push all out till failure." },
-  { title: "Volume", body: "Semua workout 4 sets × 15 reps." },
+  { title: "Warm Up", body: "Ringan sebelum set #1 – pastikan muscle tersebut gerak." },
+  { title: "Working Set (Set #1, #2)", body: "Push all out till failure." },
+  { title: "Volume", body: "Semua workout 2 sets × 15 reps." },
   { title: "Tempo", body: "Workout slowly, hold 4 saat dan squeeze selama 4 saat sebelum buat rep ke-2." },
   { title: "Rest", body: "2–3 mins (majority) | 3–4 mins (legs)." },
 ];

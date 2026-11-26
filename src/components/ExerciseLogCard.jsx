@@ -25,10 +25,13 @@ function buildInitialRows({ exercise, target, date, day, sessions }) {
       };
     }
     const prior = priorSets.find((s) => s.setNumber === setNumber) || priorSets[priorSets.length - 1];
+    // No earlier log to copy from: pre-fill reps with the plan's target
+    // (e.g. "15") so only the weight needs keying in.
+    const defaultReps = /^\d+$/.test(target.repRange) ? target.repRange : "";
     return {
       setNumber,
       weight: prior?.weight != null ? String(prior.weight) : "",
-      reps: prior?.reps != null ? String(prior.reps) : "",
+      reps: prior?.reps != null ? String(prior.reps) : defaultReps,
       saved: null,
     };
   });

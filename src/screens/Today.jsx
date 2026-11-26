@@ -1,4 +1,4 @@
-import { PROGRAM, EXERCISE_MAP, GUIDELINE } from "../data/exercises";
+import { PROGRAM, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
 import { findSession } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
@@ -111,7 +111,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             <span className="hero-dark-text">
               <span className="hero-dark-title">{dayInfo.focus} Day</span>
               <span className="hero-dark-sub">
-                {items.length} exercises · 4 × 15
+                {items.length} exercises · {VOLUME_LABEL}
               </span>
             </span>
             <span className="hero-dark-arrow">
@@ -138,11 +138,11 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
                 </div>
                 <div className="tile-stat-divider" />
                 <div>
-                  <div className="tile-stat-value">4×15</div>
+                  <div className="tile-stat-value">{VOLUME_LABEL.replace(/ /g, "")}</div>
                   <div className="tile-stat-label">Volume</div>
                 </div>
               </div>
-              <div className="tile-foot">Set 1 = warm-up</div>
+              <div className="tile-foot">Till failure</div>
             </div>
           </div>
 

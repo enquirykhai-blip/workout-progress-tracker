@@ -15,9 +15,10 @@ via Firebase (Firestore + email/password auth) when signed in.
 | Sabtu | Tricep | 2–3 mins |
 | Ahad / Isnin | Rest | — |
 
-Every exercise is 4 sets × 15 reps: set 1 is a light warm-up (shown as "W"),
-sets 2–4 are working sets taken to failure, with a slow tempo (hold and
-squeeze 4 seconds before the next rep). Each day's screen shows its key
+Every exercise is 2 sets × 15 reps, both working sets taken to failure
+(warm up lightly first), with a slow tempo (hold and squeeze 4 seconds
+before the next rep). Reps come pre-filled with 15, so only the weight needs
+keying in. Each day's screen shows its key
 focus, rest range, and this gym guideline; each exercise is tagged with the
 muscle it targets and whether it's compound or isolation. The full program
 lives in `src/data/exercises.js`.
