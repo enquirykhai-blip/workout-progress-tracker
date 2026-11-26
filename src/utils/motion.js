@@ -19,6 +19,8 @@ const RIPPLE_TARGETS = [
   ".segmented button",
   ".week-nav button",
   ".empty-card",
+  ".coach-launch",
+  ".coach-chip",
 ].join(",");
 
 const reducedMotion = () =>
