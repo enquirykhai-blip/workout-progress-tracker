@@ -11,6 +11,7 @@ import { todayISO } from "./utils/date";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
+import VoicePicker from "./components/VoicePicker";
 import FocusTimer from "./components/FocusTimer";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
@@ -162,6 +163,12 @@ function WorkoutApp({ uid, email, onSignOut }) {
                 {secs === "auto" ? "Auto" : `${secs}s`}
               </button>
             ))}
+          </div>
+          <div className="account-section-label">Coach Voice</div>
+          <VoicePicker />
+          <div className="account-hint">
+            Sounds robotic? Pick an "Enhanced" / "Premium" voice, or on iPhone download one in Settings →
+            Accessibility → Spoken Content → Voices → English.
           </div>
           <button className="btn btn-secondary btn-block" onClick={onSignOut}>
             Sign Out

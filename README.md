@@ -117,10 +117,13 @@ an afterthought, alongside the workout split.
   (plan), hold 2s, or no hold. Pause, Stop (keeps the count so far), −1/+1
   to correct, and "+ Keep going" to count past the target to failure.
   Finishing fills REPS — and if KG is filled it logs the set, which opens
-  the rest timer. The voice is English and prefers a male system voice
-  (e.g. Daniel / Aaron on iPhone, "Google UK English Male" / David
-  elsewhere), falling back to a lower-pitched English voice; works offline
-  and keeps the screen awake.
+  the rest timer. The voice is English: "Auto" ranks the device's voices
+  — high-quality (Enhanced / Premium / Neural / Natural) first, then male
+  (Daniel, Aaron, Google UK English Male, David…) — and never picks Apple's
+  robotic novelty voices (Fred, Eddy, Reed, Rocko, Zarvox…). Pitch and rate
+  stay natural. Settings → Coach Voice lists every English voice with a
+  ▶ Test button to choose the clearest. Works offline and keeps the screen
+  awake.
 - **Focus rest timer** — logging a set opens one full-screen timer: a big
   ring countdown, the exercise name, "Next up" (the next set, or the next
   exercise), and −15s / Skip rest / +15s. Minimise it to a floating pill
