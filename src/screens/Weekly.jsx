@@ -6,7 +6,7 @@ import { IconCheck, IconChevronLeft, IconChevronRight } from "../components/icon
 
 const STATUS_LABEL = { done: "Done", missed: "Missed", future: "Upcoming", today: "Today", rest: "Rest" };
 
-export default function Weekly({ sessions }) {
+export default function Weekly({ sessions, dayOverrides = {} }) {
   const [weekOffset, setWeekOffset] = useState(0);
   const today = todayISO();
 
@@ -19,14 +19,14 @@ export default function Weekly({ sessions }) {
   const weekDates = getWeekDates(anchor);
   const loggedDates = useMemo(() => datesWithSessions(sessions), [sessions]);
 
-  const workoutDaysThisWeek = weekDates.filter((d) => dayInfoForDate(d).type !== "rest");
+  const workoutDaysThisWeek = weekDates.filter((d) => dayInfoForDate(d, dayOverrides).type !== "rest");
   const completedCount = workoutDaysThisWeek.filter((d) => loggedDates.has(toISODate(d))).length;
 
   const rangeLabel = `${formatShortDate(toISODate(weekDates[0]))} – ${formatShortDate(toISODate(weekDates[6]))}`;
 
   function statusFor(date) {
     const iso = toISODate(date);
-    const dayInfo = dayInfoForDate(date);
+    const dayInfo = dayInfoForDate(date, dayOverrides);
     if (dayInfo.type === "rest") return "rest";
     if (loggedDates.has(iso)) return "done";
     if (iso === today) return "today";
@@ -68,7 +68,7 @@ export default function Weekly({ sessions }) {
       <div className="card schedule-card">
         {weekDates.map((date) => {
           const iso = toISODate(date);
-          const dayInfo = dayInfoForDate(date);
+          const dayInfo = dayInfoForDate(date, dayOverrides);
           const status = statusFor(date);
           return (
             <div className={`schedule-row${iso === today ? " is-today" : ""}`} key={iso}>
@@ -78,7 +78,13 @@ export default function Weekly({ sessions }) {
               </div>
               <div className="schedule-main">
                 <div className="schedule-focus">{dayInfo.type === "rest" ? "Rest" : dayInfo.focus}</div>
-                {dayInfo.type !== "rest" && <div className="schedule-meta">Rest {dayInfo.rest}</div>}
+                {(dayInfo.type !== "rest" || dayInfo.overridden) && (
+                  <div className="schedule-meta">
+                    {dayInfo.overridden ? "Ditukar" : ""}
+                    {dayInfo.overridden && dayInfo.type !== "rest" ? " · " : ""}
+                    {dayInfo.type !== "rest" ? `Rest ${dayInfo.rest}` : ""}
+                  </div>
+                )}
               </div>
               <span className={`status-pill ${status}`}>
                 {status === "done" && <IconCheck width={12} height={12} />}

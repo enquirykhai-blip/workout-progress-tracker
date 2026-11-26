@@ -1,8 +1,9 @@
-import { PROGRAM, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL, DAYS } from "../data/exercises";
+import { PROGRAM, PROGRAMS, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL, DAYS } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
 import { findSession, getBestSet } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
-import { IconArrowRight, IconChevronRight } from "../components/icons";
+import ProgramPicker from "../components/ProgramPicker";
+import { IconArrowRight, IconChevronRight, IconSwap } from "../components/icons";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
@@ -39,14 +40,24 @@ function ProgressRing({ done, total, size = 96, stroke = 5 }) {
   );
 }
 
-export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, onGoToNutrition, displayName }) {
+export default function Today({
+  sessions,
+  onLogSet,
+  onDeleteSet,
+  onNotesChange,
+  onGoToNutrition,
+  displayName,
+  dayOverrides = {},
+  onPickProgram,
+}) {
   const date = todayISO();
-  const dayInfo = dayInfoForDate(new Date());
+  const dayInfo = dayInfoForDate(new Date(), dayOverrides);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useLocalStorageState(STORAGE_KEYS.GUIDE_OPEN, false);
 
   const items =
     dayInfo.type === "workout"
-      ? PROGRAM[dayInfo.key].map((entry) => ({
+      ? PROGRAM[dayInfo.programId].map((entry) => ({
           exercise: EXERCISE_MAP[entry.exerciseId],
           target: entry,
         }))
@@ -95,11 +106,17 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
     wasAllDone.current = allDone;
   }, [allDone]);
 
-  // Next training day after today (for the rest-day screen).
+  // Next scheduled training day after today (for the rest-day screen).
   const todayIdx = DAYS.findIndex((d) => d.key === dayInfo.key);
-  const nextWorkout = [1, 2, 3, 4, 5, 6, 7]
-    .map((n) => DAYS[(todayIdx + n) % 7])
-    .find((d) => d.type === "workout");
+  const nextDay = [1, 2, 3, 4, 5, 6, 7].map((n) => DAYS[(todayIdx + n) % 7]).find((d) => d.programId);
+  const nextWorkout = nextDay && { label: nextDay.label, ...PROGRAMS[nextDay.programId] };
+
+  const eyebrow = (
+    <span className="hero-dark-eyebrow">
+      {dayInfo.label} · {formatDisplayDate(date)}
+      {dayInfo.overridden && " · Ditukar"}
+    </span>
+  );
 
   return (
     <div className="screen">
@@ -116,17 +133,20 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           <div className="hero-dark">
             <div className="hero-dark-top">
               <div className="hero-dark-text">
-                <span className="hero-dark-eyebrow">
-                  {dayInfo.label} · {formatDisplayDate(date)}
-                </span>
+                {eyebrow}
                 <span className="hero-dark-title">Rest Day</span>
                 <span className="hero-dark-sub">Rehat, minum air, makan cukup protein.</span>
               </div>
               <span className="hero-dark-emoji">🌙</span>
             </div>
-            <button className="hero-dark-cta" onClick={onGoToNutrition}>
-              Log today's meals <IconArrowRight width={16} height={16} />
-            </button>
+            <div className="hero-dark-actions">
+              <button className="hero-dark-cta" onClick={onGoToNutrition}>
+                Log today's meals <IconArrowRight width={16} height={16} />
+              </button>
+              <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
+                <IconSwap width={16} height={16} /> Nak workout?
+              </button>
+            </div>
           </div>
 
           {nextWorkout && (
@@ -137,7 +157,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
                   <div className="next-card-day">{nextWorkout.label}</div>
                   <div className="next-card-focus">{nextWorkout.focus}</div>
                   <div className="next-card-meta">
-                    {PROGRAM[nextWorkout.key].length} exercises · {VOLUME_LABEL} · Rest {nextWorkout.rest}
+                    {nextWorkout.exercises.length} exercises · {VOLUME_LABEL} · Rest {nextWorkout.rest}
                   </div>
                 </div>
                 <ul className="tile-list next-card-list">
@@ -155,9 +175,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             <div className={`hero-dark hero-complete${celebrate ? " celebrate" : ""}`}>
               <div className="hero-dark-top">
                 <div className="hero-dark-text">
-                  <span className="hero-dark-eyebrow">
-                    {dayInfo.label} · {formatDisplayDate(date)}
-                  </span>
+                  {eyebrow}
                   <span className="hero-dark-title">Workout complete</span>
                   <span className="hero-dark-sub">{dayInfo.focus} Day siap. Good work!</span>
                 </div>
@@ -185,17 +203,20 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             <div className="hero-dark">
               <div className="hero-dark-top">
                 <div className="hero-dark-text">
-                  <span className="hero-dark-eyebrow">
-                    {dayInfo.label} · {formatDisplayDate(date)}
-                  </span>
+                  {eyebrow}
                   <span className="hero-dark-title">{dayInfo.focus} Day</span>
                   <span className="hero-dark-sub">Up next: {nextItem.exercise.name}</span>
                 </div>
                 <ProgressRing done={doneCount} total={items.length} />
               </div>
-              <button className="hero-dark-cta" onClick={scrollToNext}>
-                {ctaLabel} <IconArrowRight width={16} height={16} />
-              </button>
+              <div className="hero-dark-actions">
+                <button className="hero-dark-cta" onClick={scrollToNext}>
+                  {ctaLabel} <IconArrowRight width={16} height={16} />
+                </button>
+                <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
+                  <IconSwap width={16} height={16} /> Tukar
+                </button>
+              </div>
             </div>
           )}
 
@@ -268,14 +289,23 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
                 day={dayInfo.key}
                 sessions={sessions}
                 done={isExerciseDone(exercise, target)}
-                onLogSet={(setNumber, weight, reps) => onLogSet(exercise, dayInfo.key, setNumber, weight, reps)}
+                onLogSet={(setNumber, weight, reps) =>
+                  onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds)
+                }
                 onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
                 onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
               />
             </div>
           ))}
-
         </>
+      )}
+
+      {pickerOpen && (
+        <ProgramPicker
+          dayInfo={dayInfo}
+          onPick={(programId) => onPickProgram?.(date, programId)}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
     </div>
   );

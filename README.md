@@ -14,6 +14,13 @@ via Firebase (Firestore + email/password auth) when signed in.
 | Sabtu | Tricep | 2–3 mins |
 | Ahad / Isnin / Khamis | Rest | — |
 
+**Legs** (3–4 mins rest) stays in the program library but isn't on the
+default schedule. On any day, **Tukar** (or **Nak workout?** on a rest day)
+opens a picker to run any program — Back, Shoulder, Legs, Bicep + Forearm,
+Tricep — or make it a rest day, for that date only. Swaps show as "Ditukar"
+on Today and in the Week schedule; picking the weekday's own default clears
+the swap.
+
 Every exercise is 2 sets × 15 reps, both working sets taken to failure
 (warm up lightly first), with a slow tempo (hold and squeeze 4 seconds
 before the next rep). Reps come pre-filled with 15, so only the weight needs
@@ -68,7 +75,7 @@ an afterthought, alongside the workout split.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
 - **Rest Timer** — auto-starts after logging any set. Default is "Auto",
-  which follows the day's plan (2 min); a fixed
+  which follows the day's plan (2 min, or 3 min for Legs); a fixed
   60–240s can be picked instead in the account menu. Shown with a floating bar showing the countdown, ±15s
   adjustment, and a skip button.
 - **Install as an app** — installable on your phone's home screen (PWA), works
@@ -101,11 +108,12 @@ Everything is stored in `localStorage` under the `wpt.*` keys, so the app works
 fully offline:
 
 - `wpt.sessions.v1` — logged sets per exercise/date
+- `wpt.dayOverrides.v1` — per-date program swaps (`{ date: programId | "rest" }`)
 - `wpt.nutrition.v1` — logged calorie/protein entries
 - `wpt.nutritionTargets.v1` — daily calorie/protein goals
 
 Signing in (email/password, via Firebase Auth) also syncs each of these to
-Firestore under `users/{uid}/data/{sessions,nutrition,nutritionTargets}`,
+Firestore under `users/{uid}/data/{sessions,dayOverrides,nutrition,nutritionTargets}`,
 so the same account sees the same data on any device. Recommended Firestore
 security rules (Firestore console → Rules):
 

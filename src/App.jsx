@@ -6,7 +6,6 @@ import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
-import { DAY_BY_KEY } from "./data/exercises";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
@@ -40,6 +39,8 @@ export default function App() {
 function WorkoutApp({ uid, email, onSignOut }) {
   const [tab, setTab] = useState("today");
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
+  // Per-date program swaps: { "YYYY-MM-DD": programId | "rest" }.
+  const [dayOverrides, setDayOverrides] = useCloudState(STORAGE_KEYS.DAY_OVERRIDES, "dayOverrides", {}, uid);
   const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
   const [nutritionTargets, setNutritionTargets] = useCloudState(
     STORAGE_KEYS.NUTRITION_TARGETS,
@@ -62,7 +63,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   }, []);
 
   const handleLogSet = useCallback(
-    (exercise, day, setNumber, weight, reps) => {
+    (exercise, day, setNumber, weight, reps, restSeconds = 120) => {
       const iso = todayISO();
       const wasPR = isPR(sessions, exercise.id, iso, weight, reps);
       setSessions((prev) => upsertSet(prev, { date: iso, day, exerciseId: exercise.id, setNumber, weight, reps }));
@@ -71,7 +72,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
       const duration =
-        restTimer.defaultDuration === "auto" ? DAY_BY_KEY[day]?.restSeconds ?? 120 : restTimer.defaultDuration;
+        restTimer.defaultDuration === "auto" ? restSeconds : restTimer.defaultDuration;
       restTimer.start(duration);
       return wasPR;
     },
@@ -155,9 +156,18 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onNotesChange={handleNotesChange}
           onGoToNutrition={() => setTab("nutrition")}
           displayName={displayName.trim() || fallbackName}
+          dayOverrides={dayOverrides}
+          onPickProgram={(date, programId) =>
+            setDayOverrides((prev) => {
+              const next = { ...prev };
+              if (programId === undefined) delete next[date];
+              else next[date] = programId;
+              return next;
+            })
+          }
         />
       )}
-      {tab === "week" && <Weekly sessions={sessions} />}
+      {tab === "week" && <Weekly sessions={sessions} dayOverrides={dayOverrides} />}
       {tab === "nutrition" && (
         <Nutrition
           entries={nutrition}
