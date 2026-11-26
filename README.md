@@ -32,7 +32,9 @@ lives in `src/data/exercises.js`.
 ## Look & Feel
 
 Light, soft-card UI: a pale grey background with white rounded cards and
-soft shadows, black pill buttons, and a floating white pill bottom nav.
+soft shadows, black pill buttons, and a floating white pill bottom nav
+whose dark active pill slides between tabs with a spring; the active tab
+swaps to a filled icon with a pop and reveals its label.
 
 - **Today** — "Welcome back" greeting (name editable in the settings menu,
   top right), then one dark hero card with the day's focus, a progress ring

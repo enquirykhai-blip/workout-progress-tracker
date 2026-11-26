@@ -195,47 +195,112 @@ input::placeholder, textarea::placeholder {
 }
 
 .bottom-nav {
+  --nav-pad: 6px;
+  --nav-fill-contrast: #111;
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   bottom: calc(16px + var(--safe-bottom));
-  width: calc(100% - 72px);
-  max-width: 380px;
-  padding: 6px;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  width: calc(100% - 64px);
+  max-width: 360px;
+  padding: var(--nav-pad);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(22px) saturate(180%);
+  -webkit-backdrop-filter: blur(22px) saturate(180%);
   border-radius: 999px;
-  box-shadow: var(--shadow-float);
-  display: flex;
-  justify-content: space-between;
-  gap: 4px;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.08),
+    inset 0 0.5px 0 rgba(255, 255, 255, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    0 14px 34px rgba(0, 0, 0, 0.12);
   z-index: 40;
+  isolation: isolate;
+}
+
+/* The sliding pill behind the active tab. */
+.nav-indicator {
+  position: absolute;
+  top: var(--nav-pad);
+  bottom: var(--nav-pad);
+  left: var(--nav-pad);
+  width: calc((100% - var(--nav-pad) * 2) / 3);
+  border-radius: 999px;
+  background: linear-gradient(180deg, #2a2a2a 0%, #0d0d0d 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 6px 16px rgba(0, 0, 0, 0.22);
+  transform: translateX(calc(var(--i) * 100%));
+  transition: transform 0.55s cubic-bezier(0.34, 1.36, 0.5, 1);
+  z-index: -1;
 }
 
 .nav-item {
+  height: 50px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 9px 10px 8px;
+  justify-content: center;
+  gap: 0;
   border-radius: 999px;
-  color: var(--text-tertiary);
-  font-size: 11px;
-  font-weight: 500;
-  flex: 1;
-  transition: color 0.15s ease, background 0.15s ease;
+  color: rgba(17, 17, 17, 0.42);
+  transition: color 0.3s ease, gap 0.35s ease, transform 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-item:active {
+  transform: scale(0.92);
 }
 
 .nav-item.active {
-  color: var(--text);
-  background: var(--surface-pressed);
-  font-weight: 600;
+  color: #fff;
+  gap: 7px;
 }
 
-.nav-item svg {
+.nav-icon {
+  display: flex;
   width: 22px;
   height: 22px;
+}
+
+.nav-item.active .nav-icon {
+  --nav-fill-contrast: #111;
+  animation: nav-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-label {
+  max-width: 0;
+  opacity: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transform: translateX(-4px);
+  transition: max-width 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.25s ease, transform 0.35s ease;
+}
+
+.nav-item.active .nav-label {
+  max-width: 64px;
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.08s;
+}
+
+@keyframes nav-pop {
+  0% { transform: scale(0.6) rotate(-8deg); }
+  55% { transform: scale(1.15) rotate(3deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-indicator,
+  .nav-label {
+    transition: none;
+  }
+  .nav-item.active .nav-icon {
+    animation: none;
+  }
 }
 
 .empty-state {
