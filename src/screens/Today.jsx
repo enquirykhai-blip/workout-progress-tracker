@@ -1,25 +1,25 @@
-import { PROGRAM, EXERCISE_MAP, GUIDELINE } from "../data/exercises";
+import { PROGRAM, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL, DAYS } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
 import { findSession } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
-import { IconArrowRight, IconFlame, IconChevronRight } from "../components/icons";
+import { IconArrowRight, IconChevronRight } from "../components/icons";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
 
-function ProgressRing({ done, total, size = 128, stroke = 3 }) {
+function ProgressRing({ done, total, size = 96, stroke = 5 }) {
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const pct = total ? done / total : 0;
   return (
     <div className="progress-ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--border)" strokeWidth={stroke} />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.14)" strokeWidth={stroke} />
         <circle
           cx={size / 2}
           cy={size / 2}
           r={r}
           fill="none"
-          stroke="var(--accent)"
+          stroke="#fff"
           strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={c}
@@ -33,7 +33,6 @@ function ProgressRing({ done, total, size = 128, stroke = 3 }) {
           {done}
           <span>/{total}</span>
         </div>
-        <div className="progress-ring-label">done</div>
       </div>
     </div>
   );
@@ -68,6 +67,12 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
 
   const ctaLabel = allDone ? "All done" : doneCount > 0 ? "Continue" : "Start now";
 
+  // Next training day after today (for the rest-day screen).
+  const todayIdx = DAYS.findIndex((d) => d.key === dayInfo.key);
+  const nextWorkout = [1, 2, 3, 4, 5, 6, 7]
+    .map((n) => DAYS[(todayIdx + n) % 7])
+    .find((d) => d.type === "workout");
+
   return (
     <div className="screen">
       <div className="home-greeting">
@@ -80,44 +85,61 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
 
       {dayInfo.type === "rest" ? (
         <>
-          <button className="hero-dark" onClick={onGoToNutrition}>
-            <span className="hero-dark-icon">🌙</span>
-            <span className="hero-dark-text">
-              <span className="hero-dark-title">Rest Day</span>
-              <span className="hero-dark-sub">{dayInfo.label} · log your meals</span>
-            </span>
-            <span className="hero-dark-arrow">
-              <IconChevronRight />
-            </span>
-          </button>
-
-          <h2 className="section-title">Recovery</h2>
-          <div className="card rest-card">
-            <p>
-              No lifting scheduled for {dayInfo.label}. Rest, hydrate, and let the muscle grow — macro
-              tracking doesn't take a day off.
-            </p>
-            <button className="btn btn-primary" style={{ marginTop: 16 }} onClick={onGoToNutrition}>
-              Log Today's Meals
+          <div className="hero-dark">
+            <div className="hero-dark-top">
+              <div className="hero-dark-text">
+                <span className="hero-dark-eyebrow">
+                  {dayInfo.label} · {formatDisplayDate(date)}
+                </span>
+                <span className="hero-dark-title">Rest Day</span>
+                <span className="hero-dark-sub">Rehat, minum air, makan cukup protein.</span>
+              </div>
+              <span className="hero-dark-emoji">🌙</span>
+            </div>
+            <button className="hero-dark-cta" onClick={onGoToNutrition}>
+              Log today's meals <IconArrowRight width={16} height={16} />
             </button>
           </div>
+
+          {nextWorkout && (
+            <>
+              <h2 className="section-title">Next Workout</h2>
+              <div className="card next-card">
+                <div>
+                  <div className="next-card-day">{nextWorkout.label}</div>
+                  <div className="next-card-focus">{nextWorkout.focus}</div>
+                  <div className="next-card-meta">
+                    {PROGRAM[nextWorkout.key].length} exercises · {VOLUME_LABEL} · Rest {nextWorkout.rest}
+                  </div>
+                </div>
+                <ul className="tile-list next-card-list">
+                  {nextWorkout.keyFocus.map((f) => (
+                    <li key={f}>{f}</li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          )}
         </>
       ) : (
         <>
-          <button className="hero-dark" onClick={scrollToNext}>
-            <span className="hero-dark-icon">
-              <IconFlame />
-            </span>
-            <span className="hero-dark-text">
-              <span className="hero-dark-title">{dayInfo.focus} Day</span>
-              <span className="hero-dark-sub">
-                {items.length} exercises · 4 × 15
-              </span>
-            </span>
-            <span className="hero-dark-arrow">
-              <IconChevronRight />
-            </span>
-          </button>
+          <div className="hero-dark">
+            <div className="hero-dark-top">
+              <div className="hero-dark-text">
+                <span className="hero-dark-eyebrow">
+                  {dayInfo.label} · {formatDisplayDate(date)}
+                </span>
+                <span className="hero-dark-title">{dayInfo.focus} Day</span>
+                <span className="hero-dark-sub">
+                  {allDone ? "Semua exercise siap. Good work!" : `Up next: ${nextItem.exercise.name}`}
+                </span>
+              </div>
+              <ProgressRing done={doneCount} total={items.length} />
+            </div>
+            <button className="hero-dark-cta" onClick={scrollToNext} disabled={allDone}>
+              {ctaLabel} {!allDone && <IconArrowRight width={16} height={16} />}
+            </button>
+          </div>
 
           <h2 className="section-title">Today's Plan</h2>
           <div className="tile-row">
@@ -138,30 +160,12 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
                 </div>
                 <div className="tile-stat-divider" />
                 <div>
-                  <div className="tile-stat-value">4×15</div>
+                  <div className="tile-stat-value">{VOLUME_LABEL.replace(/ /g, "")}</div>
                   <div className="tile-stat-label">Volume</div>
                 </div>
               </div>
-              <div className="tile-foot">Set 1 = warm-up</div>
+              <div className="tile-foot">Till failure</div>
             </div>
-          </div>
-
-          <div className="card progress-card">
-            <div className="progress-card-text">
-              <div className="progress-card-eyebrow">
-                {dayInfo.label} · {formatDisplayDate(date)}
-              </div>
-              <div className="progress-card-title">Overall Progress</div>
-              <p className="progress-card-desc">
-                {allDone
-                  ? "Semua exercise siap. Good work!"
-                  : `${doneCount} of ${items.length} exercises done. Push all out till failure.`}
-              </p>
-              <button className="btn btn-primary btn-sm" onClick={scrollToNext} disabled={allDone}>
-                {ctaLabel}
-              </button>
-            </div>
-            <ProgressRing done={doneCount} total={items.length} />
           </div>
 
           <div className="card guide-card">
@@ -192,7 +196,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           <div className="section-head">
             <h2 className="section-title">Exercises</h2>
             <div className="section-sub">
-              {items.length} exercises · {dayInfo.focus}
+              {doneCount}/{items.length} done · {VOLUME_LABEL} each
             </div>
           </div>
 

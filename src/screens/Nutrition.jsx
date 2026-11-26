@@ -78,9 +78,9 @@ function ChartTooltip({ active, payload, label, unit }) {
   return (
     <div
       style={{
-        background: "var(--surface-raised)",
-        border: "1px solid var(--border-strong)",
-        borderRadius: 10,
+        background: "var(--surface)",
+        boxShadow: "var(--shadow-float)",
+        borderRadius: 12,
         padding: "8px 12px",
         fontSize: 12,
       }}
@@ -112,6 +112,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
   const [addOpen, setAddOpen] = useState(false);
   const [targetsOpen, setTargetsOpen] = useState(false);
+  const [trend, setTrend] = useState("calories");
   const [mealType, setMealType] = useState(() => currentMealType());
   const [label, setLabel] = useState("");
   const [calories, setCalories] = useState("");
@@ -245,19 +246,17 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
   return (
     <div className="screen">
       <div className="screen-header">
-        <div className="eyebrow">Nutrition</div>
+        <div className="eyebrow">{formatDisplayDate(date)}</div>
         <h1 className="title-xl">Today's Intake</h1>
-        <p className="subtitle">{formatDisplayDate(date)}</p>
       </div>
 
-      <div className="card nutri-hero" style={{ position: "relative" }}>
-        <button
-          className="btn btn-ghost"
-          style={{ position: "absolute", top: 14, right: 14, minHeight: 28, padding: "4px 10px", fontSize: 12 }}
-          onClick={() => setTargetsOpen(true)}
-        >
-          Targets
-        </button>
+      <div className="card nutri-hero">
+        <div className="card-head">
+          <div className="card-head-title">Calories</div>
+          <button className="pill-btn" onClick={() => setTargetsOpen(true)}>
+            Edit targets
+          </button>
+        </div>
         <div className="nutri-hero-ring">
           <ProgressRing value={totals.calories} target={t.calories} size={168} stroke={14} />
           <div className="nutri-hero-ring-center">
@@ -269,14 +268,20 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
           {totals.calories} / {t.calories} kcal eaten today
         </div>
 
-        <div className="macro-pill-row">
-          <MacroPill label="Carbs" value={totals.carbs} target={t.carbs} />
-          <MacroPill label="Protein" value={totals.protein} target={t.protein} />
-        </div>
-        <div className="macro-pill-row" style={{ marginTop: 0 }}>
-          <MacroPill label="Fat" value={totals.fat} target={t.fat} />
-          <MacroPill label="Fiber" value={totals.fiber} target={t.fiber} />
-        </div>
+      </div>
+
+      <div className="macro-grid">
+        <MacroPill label="Protein" value={totals.protein} target={t.protein} />
+        <MacroPill label="Carbs" value={totals.carbs} target={t.carbs} />
+        <MacroPill label="Fat" value={totals.fat} target={t.fat} />
+        <MacroPill label="Fiber" value={totals.fiber} target={t.fiber} />
+      </div>
+
+      <div className="section-head">
+        <h2 className="section-title">Meals</h2>
+        <button className="pill-btn" onClick={() => setAddOpen(true)}>
+          <IconPlus width={14} height={14} /> Add food
+        </button>
       </div>
 
       {mealGroups.length > 0 ? (
@@ -304,44 +309,41 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
           </div>
         ))
       ) : (
-        <div className="card" style={{ textAlign: "center", padding: "28px 16px", color: "var(--text-secondary)", fontSize: 13.5 }}>
-          Nothing logged yet today — tap + to add a meal.
-        </div>
+        <button className="card empty-card" onClick={() => setAddOpen(true)}>
+          <span className="empty-card-icon">🍽️</span>
+          <span className="empty-card-title">Belum ada makanan hari ni</span>
+          <span className="empty-card-sub">Tap untuk tambah — scan gambar, taip, atau paste macro.</span>
+        </button>
       )}
 
       {series.length >= 2 && (
         <>
-          <div className="section-label">Calories Trend</div>
-          <div className="card" style={{ height: 180, padding: "16px 8px 8px" }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={series} margin={{ top: 4, right: 12, bottom: 0, left: -6 }}>
-                <CartesianGrid stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="dateLabel" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={40} />
-                <Tooltip content={<ChartTooltip unit="kcal" />} />
-                <Line type="monotone" dataKey="calories" stroke="var(--accent)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="section-head">
+            <h2 className="section-title">Trend</h2>
+            <div className="segmented">
+              {[
+                ["calories", "Calories"],
+                ["protein", "Protein"],
+              ].map(([key, text]) => (
+                <button key={key} className={trend === key ? "active" : ""} onClick={() => setTrend(key)}>
+                  {text}
+                </button>
+              ))}
+            </div>
           </div>
-
-          <div className="section-label">Protein Trend</div>
-          <div className="card" style={{ height: 180, padding: "16px 8px 8px" }}>
+          <div className="card" style={{ height: 200, padding: "18px 10px 10px" }}>
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={series} margin={{ top: 4, right: 12, bottom: 0, left: -6 }}>
                 <CartesianGrid stroke="var(--border)" vertical={false} />
                 <XAxis dataKey="dateLabel" stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} />
                 <YAxis stroke="var(--text-tertiary)" tick={{ fontSize: 11, fill: "var(--text-tertiary)" }} tickLine={false} axisLine={false} width={40} />
-                <Tooltip content={<ChartTooltip unit="g" />} />
-                <Line type="monotone" dataKey="protein" stroke="var(--text-secondary)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--text-secondary)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
+                <Tooltip content={<ChartTooltip unit={trend === "calories" ? "kcal" : "g"} />} />
+                <Line type="monotone" dataKey={trend} stroke="var(--accent)" strokeWidth={2.5} dot={{ r: 3, fill: "var(--accent)", strokeWidth: 0 }} activeDot={{ r: 5 }} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </>
       )}
-
-      <button className="nutri-fab" onClick={() => setAddOpen(true)} aria-label="Add food">
-        <IconPlus />
-      </button>
 
       {addOpen && (
         <Sheet
