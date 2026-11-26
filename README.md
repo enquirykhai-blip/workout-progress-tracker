@@ -100,7 +100,9 @@ an afterthought, alongside the workout split.
 - **Rep Coach (hands-free rep counting)** — "Mula set N" in the open
   exercise opens a full-screen counter: "Sedia… tiga, dua, satu, Mula!",
   then every rep is paced on the tempo (Angkat → Tahan & squeeze → Turun)
-  with a tick at each phase and the rep number spoken when it completes;
+  with a tick at each phase, and the voice calls every phase too ("angkat…
+  tahan, squeeze… turun… dua, angkat…", toggle "Sebut fasa" for numbers
+  only);
   "Dua lagi!" two from the end and "Siap!" at the target. Tempo: hold 4s
   (plan), hold 2s, or no hold. Pause, Stop (keeps the count so far), −1/+1
   to correct, and "+ Teruskan" to keep counting past the target to
