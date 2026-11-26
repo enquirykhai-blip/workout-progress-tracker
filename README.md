@@ -97,6 +97,16 @@ an afterthought, alongside the workout split.
   brings it back. Poses live in `src/data/demos.js` and are drawn by
   `src/components/ExerciseDemo.jsx` with two-bone IK, so no image files are
   needed and it works offline.
+- **Rep Coach (hands-free rep counting)** — "Mula set N" in the open
+  exercise opens a full-screen counter: "Sedia… tiga, dua, satu, Mula!",
+  then every rep is paced on the tempo (Angkat → Tahan & squeeze → Turun)
+  with a tick at each phase and the rep number spoken when it completes;
+  "Dua lagi!" two from the end and "Siap!" at the target. Tempo: hold 4s
+  (plan), hold 2s, or no hold. Pause, Stop (keeps the count so far), −1/+1
+  to correct, and "+ Teruskan" to keep counting past the target to
+  failure. Finishing fills REPS — and if KG is filled it logs the set,
+  which opens the rest timer. Speaks Malay when the phone has a Malay voice
+  (English otherwise), works offline, and keeps the screen awake.
 - **Focus rest timer** — logging a set opens one full-screen timer: a big
   ring countdown, the exercise name, "Next up" (the next set, or the next
   exercise), and −15s / Skip rest / +15s. Minimise it to a floating pill

@@ -4,6 +4,7 @@ import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps
 import { WARMUP_SETS } from "../data/exercises";
 import { DEMOS } from "../data/demos";
 import ExerciseDemo from "./ExerciseDemo";
+import RepCoach from "./RepCoach";
 import { haptic } from "../utils/motion";
 
 function buildInitialRows({ exercise, target, date, sessions }) {
@@ -97,8 +98,8 @@ export default function ExerciseLogCard({
 
   // Weight and reps are each optional — log with just one filled in
   // (bodyweight exercises need only reps; some sets only need weight noted).
-  function handleSave(i) {
-    const row = rows[i];
+  function handleSave(i, override = {}) {
+    const row = { ...rows[i], ...override };
     const weight = row.weight === "" ? null : parseFloat(row.weight);
     const reps = row.reps === "" ? null : parseInt(row.reps, 10);
     if (weight == null && reps == null) return;
@@ -111,7 +112,7 @@ export default function ExerciseLogCard({
     // doesn't have to be typed twice.
     setRows((prev) =>
       prev.map((r, idx) => {
-        if (idx === i) return { ...r, saved: { weight, reps } };
+        if (idx === i) return { ...r, ...override, saved: { weight, reps } };
         if (idx === i + 1 && !r.saved && r.weight === "" && weight != null) return { ...r, weight: String(weight) };
         return r;
       })
@@ -126,6 +127,18 @@ export default function ExerciseLogCard({
   function handleDelete(i) {
     onDeleteSet(rows[i].setNumber);
     setRows((prev) => prev.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, setNumber: idx + 1 })));
+  }
+
+  // Rep Coach works on the first set that isn't logged yet.
+  const [coachOpen, setCoachOpen] = useState(false);
+  const coachIndex = rows.findIndex((r) => !r.saved);
+  const coachRow = coachIndex >= 0 ? rows[coachIndex] : null;
+
+  function handleCoachFinish(count) {
+    setCoachOpen(false);
+    if (!coachRow) return;
+    if (coachRow.weight !== "") handleSave(coachIndex, { reps: String(count) });
+    else updateRow(coachIndex, { reps: String(count) });
   }
 
   function handleAddSet() {
@@ -253,6 +266,19 @@ export default function ExerciseLogCard({
           </div>
 
 
+          {coachRow && (
+            <button className="coach-launch" onClick={() => setCoachOpen(true)}>
+              <span className="coach-launch-icon" aria-hidden="true">
+                ▶
+              </span>
+              <span className="coach-launch-text">
+                <span className="coach-launch-title">Mula set {coachRow.setNumber}</span>
+                <span className="coach-launch-sub">Kira rep dengan suara</span>
+              </span>
+              <span className="coach-launch-reps">{target.repRange} reps</span>
+            </button>
+          )}
+
           <div className="ex-actions">
             <button className="exercise-action" onClick={handleAddSet}>
               <IconPlus width={14} height={14} /> Set
@@ -271,6 +297,18 @@ export default function ExerciseLogCard({
               <IconTimer width={14} height={14} /> {formatClock(restSeconds)}
             </button>
           </div>
+
+          {coachOpen && coachRow && (
+            <RepCoach
+              exerciseName={exercise.name}
+              setNumber={coachRow.setNumber}
+              totalSets={rows.length}
+              targetReps={parseInt(coachRow.reps, 10) || parseInt(target.repRange, 10) || 15}
+              weight={coachRow.weight}
+              onFinish={handleCoachFinish}
+              onClose={() => setCoachOpen(false)}
+            />
+          )}
 
           {noteOpen && (
             <textarea
