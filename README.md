@@ -41,6 +41,25 @@ soft shadows, black pill buttons, and a floating white pill bottom nav.
   meals grouped by type with an "Add food" button, and one trend chart with a
   Calories / Protein toggle.
 
+## UX Laws Applied
+
+- **Hick's Law** — the rest timer has 4 choices (Auto / 60 / 120 / 180s), not 6.
+- **Fitts's Law** — the set that is filled in and waiting to be logged gets a
+  big black ✓ button; delete, ±15s, skip and week-nav targets are 44px+.
+- **Jakob's Law** — familiar patterns: bottom tab bar, bottom sheets, a
+  settings icon top right, a ✓ to log a set.
+- **Miller's Law** — information is chunked: 3 tabs, 4 macro tiles, 4 timer
+  presets, finished exercises fold to one line.
+- **Tesler's Law** — complexity is absorbed for the user: reps pre-filled
+  with 15, the next set copies the weight you just logged, rest time follows
+  the day's plan.
+- **Aesthetic-Usability** — one calm, consistent visual system (soft cards,
+  pill buttons, one accent).
+- **Peak-End Rule** — finishing the last exercise turns the hero into a
+  "Workout complete" summary (sets, kg lifted, PRs) with a small celebration.
+- **Doherty Threshold** — a skeleton screen shows instantly while the saved
+  session loads, and every tap has immediate visual feedback.
+
 ## Features
 
 The app has three tabs: **Today** (workout), **Week** (a 7-day overview), and
@@ -152,7 +171,7 @@ Built with the modular Firebase JS SDK (v9+):
 (not a decrementing counter), so it stays accurate even if the tab is
 backgrounded. `App.jsx` starts it every time a set is logged, regardless of
 whether it was a PR. The duration is "Auto" by default (the day's
-`restSeconds` from `src/data/exercises.js`) or a fixed 60/90/120/180/240s —
+`restSeconds` from `src/data/exercises.js`) or a fixed 60/120/180s —
 a per-device preference stored in `localStorage` under
 `wpt.restDuration.v2` — deliberately not synced to Firestore, since it's a
 device/UI setting rather than workout data. `src/components/RestTimerBar.jsx`

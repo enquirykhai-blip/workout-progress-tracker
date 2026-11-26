@@ -1,8 +1,9 @@
 import { PROGRAM, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL, DAYS } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
-import { findSession } from "../utils/sessionOps";
+import { findSession, getBestSet } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
 import { IconArrowRight, IconChevronRight } from "../components/icons";
+import { useEffect, useRef, useState } from "react";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
 
@@ -65,7 +66,34 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
     document.getElementById(`ex-${target.exercise.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  const ctaLabel = allDone ? "All done" : doneCount > 0 ? "Continue" : "Start now";
+  const ctaLabel = doneCount > 0 ? "Continue" : "Start now";
+
+  // Peak-End Rule: finish the session on a high note — a summary of what
+  // was lifted today, with a one-off celebration when the last exercise lands.
+  const todaysSessions = items.map(({ exercise }) => findSession(sessions, date, exercise.id)).filter(Boolean);
+  const setsLogged = todaysSessions.reduce((n, sess) => n + sess.sets.length, 0);
+  const volume = todaysSessions.reduce(
+    (kg, sess) => kg + sess.sets.reduce((t, set) => t + (set.weight || 0) * (set.reps || 0), 0),
+    0
+  );
+  const prCount = todaysSessions.filter((sess) => {
+    const prev = getBestSet(sessions, sess.exerciseId, date);
+    const todayTop = Math.max(0, ...sess.sets.map((set) => set.weight || 0));
+    return todayTop > 0 && (!prev || todayTop > prev.weight);
+  }).length;
+
+  const wasAllDone = useRef(allDone);
+  const [celebrate, setCelebrate] = useState(false);
+  useEffect(() => {
+    if (allDone && !wasAllDone.current) {
+      setCelebrate(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      const t = setTimeout(() => setCelebrate(false), 1600);
+      wasAllDone.current = allDone;
+      return () => clearTimeout(t);
+    }
+    wasAllDone.current = allDone;
+  }, [allDone]);
 
   // Next training day after today (for the rest-day screen).
   const todayIdx = DAYS.findIndex((d) => d.key === dayInfo.key);
@@ -123,23 +151,53 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
         </>
       ) : (
         <>
-          <div className="hero-dark">
-            <div className="hero-dark-top">
-              <div className="hero-dark-text">
-                <span className="hero-dark-eyebrow">
-                  {dayInfo.label} · {formatDisplayDate(date)}
-                </span>
-                <span className="hero-dark-title">{dayInfo.focus} Day</span>
-                <span className="hero-dark-sub">
-                  {allDone ? "Semua exercise siap. Good work!" : `Up next: ${nextItem.exercise.name}`}
-                </span>
+          {allDone ? (
+            <div className={`hero-dark hero-complete${celebrate ? " celebrate" : ""}`}>
+              <div className="hero-dark-top">
+                <div className="hero-dark-text">
+                  <span className="hero-dark-eyebrow">
+                    {dayInfo.label} · {formatDisplayDate(date)}
+                  </span>
+                  <span className="hero-dark-title">Workout complete</span>
+                  <span className="hero-dark-sub">{dayInfo.focus} Day siap. Good work!</span>
+                </div>
+                <span className="hero-dark-emoji">🏆</span>
               </div>
-              <ProgressRing done={doneCount} total={items.length} />
+              <div className="hero-stats">
+                <div>
+                  <div className="hero-stat-value">{setsLogged}</div>
+                  <div className="hero-stat-label">Sets</div>
+                </div>
+                <div>
+                  <div className="hero-stat-value">{volume.toLocaleString("en-US")}</div>
+                  <div className="hero-stat-label">kg lifted</div>
+                </div>
+                <div>
+                  <div className="hero-stat-value">{prCount}</div>
+                  <div className="hero-stat-label">{prCount === 1 ? "PR" : "PRs"}</div>
+                </div>
+              </div>
+              <button className="hero-dark-cta" onClick={onGoToNutrition}>
+                Log today's meals <IconArrowRight width={16} height={16} />
+              </button>
             </div>
-            <button className="hero-dark-cta" onClick={scrollToNext} disabled={allDone}>
-              {ctaLabel} {!allDone && <IconArrowRight width={16} height={16} />}
-            </button>
-          </div>
+          ) : (
+            <div className="hero-dark">
+              <div className="hero-dark-top">
+                <div className="hero-dark-text">
+                  <span className="hero-dark-eyebrow">
+                    {dayInfo.label} · {formatDisplayDate(date)}
+                  </span>
+                  <span className="hero-dark-title">{dayInfo.focus} Day</span>
+                  <span className="hero-dark-sub">Up next: {nextItem.exercise.name}</span>
+                </div>
+                <ProgressRing done={doneCount} total={items.length} />
+              </div>
+              <button className="hero-dark-cta" onClick={scrollToNext}>
+                {ctaLabel} <IconArrowRight width={16} height={16} />
+              </button>
+            </div>
+          )}
 
           <h2 className="section-title">Today's Plan</h2>
           <div className="tile-row">
@@ -217,11 +275,6 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             </div>
           ))}
 
-          {allDone && (
-            <button className="btn btn-secondary btn-block" onClick={onGoToNutrition} style={{ marginTop: 6 }}>
-              Log Today's Meals <IconArrowRight width={16} height={16} />
-            </button>
-          )}
         </>
       )}
     </div>

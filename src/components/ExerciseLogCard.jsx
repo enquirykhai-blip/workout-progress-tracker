@@ -88,7 +88,15 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
     if (reps != null && (Number.isNaN(reps) || reps < 0)) return;
 
     const isPR = onLogSet(row.setNumber, weight, reps);
-    updateRow(index, { saved: { weight, reps } });
+    // Tesler's Law: carry this weight into the next untouched set so the
+    // user doesn't have to type the same number twice.
+    setRows((prev) =>
+      prev.map((r, i) => {
+        if (i === index) return { ...r, saved: { weight, reps } };
+        if (i === index + 1 && !r.saved && r.weight === "" && weight != null) return { ...r, weight: String(weight) };
+        return r;
+      })
+    );
     if (isPR) {
       setPrRowIndex(index);
       setTimeout(() => setPrRowIndex((cur) => (cur === index ? null : cur)), 550);
@@ -141,18 +149,17 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
           </div>
         </div>
         <div className="exercise-head-side">
-          {best ? (
-            <div className="exercise-best">
-              Best {best.weight}kg{best.reps > 0 ? ` × ${best.reps}` : ""}
-            </div>
-          ) : (
-            bestRepsOnly && <div className="exercise-best">Best {bestRepsOnly.reps} reps</div>
-          )}
           <span className={`exercise-chevron${expanded ? " open" : ""}`}>
             <IconChevronRight />
           </span>
         </div>
       </button>
+
+      {expanded && (best || bestRepsOnly) && (
+        <div className="exercise-best">
+          Best: {best ? `${best.weight}kg${best.reps > 0 ? ` × ${best.reps}` : ""}` : `${bestRepsOnly.reps} reps`}
+        </div>
+      )}
 
       {!expanded && summary && <div className="exercise-summary">{summary}</div>}
 
@@ -162,6 +169,9 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
       <div className="set-rows">
         {rows.map((row, i) => {
           const isSaved = matchesSaved(row);
+          // Fitts's Law: the set that's filled in and waiting to be logged
+          // gets the big, high-contrast button.
+          const isReady = !isSaved && (row.weight !== "" || row.reps !== "") && rows.slice(0, i).every((r) => r.saved);
           return (
             <div className={`set-row${row.saved ? " has-delete" : ""}`} key={row.setNumber}>
               {row.setNumber <= WARMUP_SETS ? (
@@ -190,7 +200,7 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
                 <span className="unit">REPS</span>
               </div>
               <button
-                className={`set-log-btn${isSaved ? " done" : ""}${prRowIndex === i ? " pr" : ""}`}
+                className={`set-log-btn${isSaved ? " done" : ""}${isReady ? " ready" : ""}${prRowIndex === i ? " pr" : ""}`}
                 onClick={() => handleSave(i)}
                 disabled={row.weight === "" && row.reps === ""}
                 aria-label={`Log set ${row.setNumber}`}
