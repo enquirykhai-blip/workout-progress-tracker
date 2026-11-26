@@ -99,21 +99,21 @@ input::placeholder, textarea::placeholder {
 }
 
 .screen-header {
-  margin-bottom: 24px;
+  min-height: 48px;
+  padding-right: 60px;
+  margin-bottom: 22px;
 }
 
 .eyebrow {
   font-size: 13px;
-  font-weight: 600;
-  color: var(--accent);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  margin-bottom: 4px;
 }
 
 .title-xl {
-  font-size: 34px;
-  font-weight: 700;
+  font-size: 30px;
+  font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.1;
 }
@@ -377,10 +377,73 @@ input::placeholder, textarea::placeholder {
 }
 
 .exercise-card-head {
+  width: 100%;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 4px;
+  gap: 10px;
+  padding: 0;
+  text-align: left;
+}
+
+.exercise-head-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.exercise-chevron {
+  display: flex;
+  color: var(--text-tertiary);
+  transition: transform 0.2s ease;
+}
+
+.exercise-chevron svg {
+  width: 18px;
+  height: 18px;
+}
+
+.exercise-chevron.open {
+  transform: rotate(90deg);
+}
+
+.exercise-card.is-collapsed {
+  padding-top: 16px;
+  padding-bottom: 16px;
+}
+
+.exercise-card.is-done.is-collapsed .exercise-name {
+  color: var(--text-secondary);
+}
+
+.exercise-summary {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.exercise-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.exercise-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .exercise-name {
@@ -411,15 +474,17 @@ input::placeholder, textarea::placeholder {
 }
 
 .exercise-best {
-  font-size: 12px;
-  color: var(--accent);
+  font-size: 11.5px;
+  color: var(--text-secondary);
   font-weight: 600;
   white-space: nowrap;
-  margin-left: 10px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--surface-raised);
 }
 
 .set-rows {
-  margin-top: 14px;
+  margin-top: 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -521,27 +586,6 @@ input::placeholder, textarea::placeholder {
 
 .set-delete-btn:active {
   color: var(--accent);
-}
-
-.add-set-row {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  border: 1px dashed var(--border-strong);
-  color: var(--text-secondary);
-  font-size: 13px;
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-.note-toggle {
-  margin-top: 12px;
-  font-size: 13px;
-  color: var(--text-tertiary);
-  font-weight: 600;
 }
 
 .note-input {
@@ -939,12 +983,6 @@ input::placeholder, textarea::placeholder {
   margin-top: 14px;
 }
 
-.macro-pill-row {
-  display: flex;
-  gap: 10px;
-  margin: 14px 0;
-}
-
 .macro-pill {
   flex: 1;
   display: flex;
@@ -1022,27 +1060,6 @@ input::placeholder, textarea::placeholder {
   font-size: 12.5px;
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
-}
-
-.nutri-fab {
-  position: fixed;
-  right: 20px;
-  bottom: calc(96px + var(--safe-bottom));
-  width: 54px;
-  height: 54px;
-  border-radius: 50%;
-  background: var(--accent);
-  color: var(--on-accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 10px 26px var(--accent-glow);
-  z-index: 46;
-}
-
-.nutri-fab svg {
-  width: 24px;
-  height: 24px;
 }
 
 .nutrition-row {
@@ -1126,10 +1143,8 @@ input::placeholder, textarea::placeholder {
 
 .section-label {
   font-size: 13px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  color: var(--text-tertiary);
   margin: 20px 0 10px;
 }
 
@@ -1225,36 +1240,19 @@ input::placeholder, textarea::placeholder {
 .hero-dark {
   width: 100%;
   display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 22px 20px 22px 26px;
+  flex-direction: column;
+  gap: 18px;
+  padding: 22px;
   border-radius: var(--radius-lg);
   background: radial-gradient(120% 140% at 0% 0%, #2a2a2a 0%, #0b0b0b 55%, #000 100%);
   color: #fff;
-  text-align: left;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
-  transition: transform 0.12s ease;
 }
 
-.hero-dark:active {
-  transform: scale(0.98);
-}
-
-.hero-dark-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.1);
+.hero-dark-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-}
-
-.hero-dark-icon svg {
-  width: 24px;
-  height: 24px;
+  gap: 14px;
 }
 
 .hero-dark-text {
@@ -1264,33 +1262,94 @@ input::placeholder, textarea::placeholder {
   min-width: 0;
 }
 
+.hero-dark-eyebrow {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 .hero-dark-title {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  margin-top: 4px;
 }
 
 .hero-dark-sub {
   font-size: 13.5px;
-  color: rgba(255, 255, 255, 0.55);
-  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.6);
+  margin-top: 6px;
+  line-height: 1.35;
 }
 
-.hero-dark-arrow {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: #fff;
-  color: #111;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.hero-dark-emoji {
+  font-size: 44px;
   flex-shrink: 0;
 }
 
-.hero-dark-arrow svg {
-  width: 20px;
-  height: 20px;
+.hero-dark-cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  background: #fff;
+  color: #111;
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform 0.12s ease, opacity 0.15s ease;
+}
+
+.hero-dark-cta:active {
+  transform: scale(0.96);
+}
+
+.hero-dark-cta:disabled {
+  opacity: 0.5;
+}
+
+.hero-dark .progress-ring::before {
+  inset: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+}
+
+.hero-dark .progress-ring-value {
+  font-size: 24px;
+}
+
+.hero-dark .progress-ring-value span {
+  color: rgba(255, 255, 255, 0.45);
+  font-size: 14px;
+}
+
+.next-card {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.next-card-day {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+}
+
+.next-card-focus {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+.next-card-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+.next-card-list {
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
 }
 
 .section-title {
@@ -1302,6 +1361,10 @@ input::placeholder, textarea::placeholder {
 
 .section-head {
   margin: 30px 0 16px;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
 }
 
 .section-head .section-title {
@@ -1309,9 +1372,9 @@ input::placeholder, textarea::placeholder {
 }
 
 .section-sub {
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-tertiary);
-  margin-top: 4px;
+  white-space: nowrap;
 }
 
 .tile-row {
@@ -1401,48 +1464,6 @@ input::placeholder, textarea::placeholder {
 
 .tile-stat + .tile-foot {
   margin-top: auto;
-}
-
-.progress-card {
-  margin-top: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.card + .progress-card,
-.tile-row + .progress-card {
-  margin-top: 14px;
-}
-
-.progress-card-text {
-  flex: 1;
-  min-width: 0;
-}
-
-.progress-card-eyebrow {
-  font-size: 12px;
-  color: var(--text-tertiary);
-}
-
-.progress-card-title {
-  font-size: 18px;
-  font-weight: 600;
-  margin-top: 2px;
-}
-
-.progress-card-desc {
-  font-size: 13px;
-  color: var(--text-tertiary);
-  line-height: 1.45;
-  margin: 12px 0 16px;
-}
-
-.btn-sm {
-  min-height: 40px;
-  padding: 0 18px;
-  font-size: 15px;
-  font-weight: 500;
 }
 
 .progress-ring {
@@ -1579,12 +1600,6 @@ input::placeholder, textarea::placeholder {
   scroll-margin-top: calc(16px + var(--safe-top));
 }
 
-.rest-card p {
-  font-size: 14.5px;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
 .account-name-input {
   width: 100%;
   height: 40px;
@@ -1629,4 +1644,258 @@ input::placeholder, textarea::placeholder {
   border-radius: 6px;
   height: 28px;
   line-height: 26px;
+}
+
+/* --- Week: range + schedule list --- */
+.week-range {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.week-nav button {
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.schedule-card {
+  padding: 6px 18px;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.schedule-row:last-child {
+  border-bottom: none;
+}
+
+.schedule-date {
+  width: 40px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.schedule-date-day {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+}
+
+.schedule-date-num {
+  font-size: 18px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-row.is-today .schedule-date {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 12px;
+  padding: 4px 0;
+}
+
+.schedule-row.is-today .schedule-date-day {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.schedule-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.schedule-focus {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.schedule-meta {
+  font-size: 12.5px;
+  color: var(--text-tertiary);
+  margin-top: 1px;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.status-pill.done {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.status-pill.today {
+  background: transparent;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
+.status-pill.missed {
+  background: transparent;
+  color: var(--text-tertiary);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+
+.status-pill.rest {
+  background: transparent;
+  color: var(--text-tertiary);
+}
+
+/* --- Shared bits: card header, pill buttons, segmented control, empty card --- */
+.card-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-head-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.section-head .pill-btn {
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.segmented {
+  display: inline-flex;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-pressed);
+}
+
+.segmented button {
+  height: 28px;
+  padding: 0 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.segmented button.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.empty-card {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 28px 20px;
+  text-align: center;
+}
+
+.empty-card-icon {
+  font-size: 30px;
+  margin-bottom: 6px;
+}
+
+.empty-card-title {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.empty-card-sub {
+  font-size: 13px;
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+
+.macro-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.macro-grid .macro-pill {
+  padding: 14px;
+  border-radius: var(--radius-md);
+}
+
+.macro-pill-icon {
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.nutri-hero {
+  padding: 20px 20px 24px;
+}
+
+.nutri-hero .nutri-hero-ring {
+  margin-top: 8px;
+}
+
+.meal-group .card {
+  padding: 4px 18px;
+}
+
+.stat-tile {
+  text-align: left;
+  padding: 18px;
+  border-radius: var(--radius-lg);
+}
+
+.stat-tile .value {
+  font-size: 26px;
+  font-weight: 600;
+}
+
+.stat-tile .label {
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+
+.week-nav {
+  margin-bottom: 14px;
+}
+
+.tile-row + .guide-card {
+  margin-top: 14px;
+}
+
+.macro-pill-icon {
+  width: 36px;
+  height: 36px;
+}
+
+.macro-pill-icon svg {
+  width: 26px;
+  height: 26px;
 }

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { IconCheck, IconPlus, IconClose } from "./icons";
+import { useEffect, useRef, useState } from "react";
+import { IconCheck, IconPlus, IconClose, IconChevronRight } from "./icons";
 import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
 import { WARMUP_SETS } from "../data/exercises";
 
@@ -52,6 +52,23 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
   const [noteOpen, setNoteOpen] = useState(Boolean(existing?.notes));
   const [note, setNote] = useState(existing?.notes || "");
   const [prRowIndex, setPrRowIndex] = useState(null);
+  // Finished exercises fold down to a one-line summary so the list stays
+  // scannable; tap the header to open one back up.
+  const [expanded, setExpanded] = useState(!done);
+  const wasDone = useRef(done);
+  useEffect(() => {
+    if (done && !wasDone.current) {
+      const t = setTimeout(() => setExpanded(false), 600);
+      wasDone.current = done;
+      return () => clearTimeout(t);
+    }
+    wasDone.current = done;
+  }, [done]);
+
+  const loggedSets = existing?.sets || [];
+  const summary = loggedSets
+    .map((set) => (set.weight != null ? `${set.weight}kg${set.reps != null ? ` × ${set.reps}` : ""}` : `${set.reps} reps`))
+    .join("  ·  ");
 
   const best = getBestSet(sessions, exercise.id, date);
   const bestRepsOnly = getBestRepsOnlySet(sessions, exercise.id, date);
@@ -101,8 +118,12 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
   }
 
   return (
-    <div className="card exercise-card">
-      <div className="exercise-card-head">
+    <div className={`card exercise-card${done ? " is-done" : ""}${expanded ? "" : " is-collapsed"}`}>
+      <button
+        className="exercise-card-head"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+      >
         <div>
           <div className="exercise-name">
             {index != null && <span className="exercise-index">{String(index).padStart(2, "0")}</span>}
@@ -119,14 +140,24 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
             {exercise.kind && <span className="exercise-tag outline">{exercise.kind}</span>}
           </div>
         </div>
-        {best ? (
-          <div className="exercise-best">
-            Best {best.weight}kg{best.reps > 0 ? ` × ${best.reps}` : ""}
-          </div>
-        ) : (
-          bestRepsOnly && <div className="exercise-best">Best {bestRepsOnly.reps} reps</div>
-        )}
-      </div>
+        <div className="exercise-head-side">
+          {best ? (
+            <div className="exercise-best">
+              Best {best.weight}kg{best.reps > 0 ? ` × ${best.reps}` : ""}
+            </div>
+          ) : (
+            bestRepsOnly && <div className="exercise-best">Best {bestRepsOnly.reps} reps</div>
+          )}
+          <span className={`exercise-chevron${expanded ? " open" : ""}`}>
+            <IconChevronRight />
+          </span>
+        </div>
+      </button>
+
+      {!expanded && summary && <div className="exercise-summary">{summary}</div>}
+
+      {expanded && (
+      <>
 
       <div className="set-rows">
         {rows.map((row, i) => {
@@ -176,23 +207,28 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
         })}
       </div>
 
-      <button className="add-set-row" onClick={handleAddSet}>
-        <IconPlus width={14} height={14} /> Add Set
-      </button>
+      <div className="exercise-actions">
+        <button className="exercise-action" onClick={handleAddSet}>
+          <IconPlus width={14} height={14} /> Add set
+        </button>
+        {!noteOpen && (
+          <button className="exercise-action" onClick={() => setNoteOpen(true)}>
+            <IconPlus width={14} height={14} /> Note
+          </button>
+        )}
+      </div>
 
-      {noteOpen ? (
+      {noteOpen && (
         <textarea
           className="note-input"
           placeholder="Notes (form cues, how it felt...)"
           value={note}
           onChange={(e) => setNote(e.target.value)}
           onBlur={handleNoteBlur}
-          autoFocus
+          autoFocus={!note}
         />
-      ) : (
-        <button className="note-toggle" onClick={() => setNoteOpen(true)}>
-          + Add note
-        </button>
+      )}
+      </>
       )}
     </div>
   );

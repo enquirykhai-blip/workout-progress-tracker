@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import { getWeekDates, toISODate, todayISO, formatDisplayDate } from "../utils/date";
+import { getWeekDates, toISODate, todayISO, formatShortDate } from "../utils/date";
 import { dayInfoForDate } from "../utils/date";
 import { datesWithSessions } from "../utils/sessionOps";
 import { IconCheck, IconChevronLeft, IconChevronRight } from "../components/icons";
+
+const STATUS_LABEL = { done: "Done", missed: "Missed", future: "Upcoming", today: "Today", rest: "Rest" };
 
 export default function Weekly({ sessions }) {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -20,26 +22,36 @@ export default function Weekly({ sessions }) {
   const workoutDaysThisWeek = weekDates.filter((d) => dayInfoForDate(d).type !== "rest");
   const completedCount = workoutDaysThisWeek.filter((d) => loggedDates.has(toISODate(d))).length;
 
-  const rangeLabel = `${formatDisplayDate(toISODate(weekDates[0]))} – ${formatDisplayDate(toISODate(weekDates[6]))}`;
+  const rangeLabel = `${formatShortDate(toISODate(weekDates[0]))} – ${formatShortDate(toISODate(weekDates[6]))}`;
+
+  function statusFor(date) {
+    const iso = toISODate(date);
+    const dayInfo = dayInfoForDate(date);
+    if (dayInfo.type === "rest") return "rest";
+    if (loggedDates.has(iso)) return "done";
+    if (iso === today) return "today";
+    if (iso > today) return "future";
+    return "missed";
+  }
 
   return (
     <div className="screen">
       <div className="screen-header">
-        <div className="eyebrow">Weekly Overview</div>
-        <h1 className="title-xl">This Week</h1>
+        <div className="eyebrow">Weekly overview</div>
+        <h1 className="title-xl">{weekOffset === 0 ? "This Week" : weekOffset === -1 ? "Last Week" : weekOffset === 1 ? "Next Week" : "Week"}</h1>
       </div>
 
       <div className="week-nav">
         <button onClick={() => setWeekOffset((w) => w - 1)} aria-label="Previous week">
           <IconChevronLeft />
         </button>
-        <span style={{ fontSize: 13, color: "var(--text-secondary)", fontWeight: 600 }}>{rangeLabel}</span>
+        <span className="week-range">{rangeLabel}</span>
         <button onClick={() => setWeekOffset((w) => w + 1)} aria-label="Next week">
           <IconChevronRight />
         </button>
       </div>
 
-      <div className="stat-row" style={{ marginBottom: 20 }}>
+      <div className="stat-row">
         <div className="stat-tile">
           <div className="value">
             {completedCount}/{workoutDaysThisWeek.length}
@@ -52,63 +64,29 @@ export default function Weekly({ sessions }) {
         </div>
       </div>
 
-      <div className="week-grid">
+      <h2 className="section-title">Schedule</h2>
+      <div className="card schedule-card">
         {weekDates.map((date) => {
           const iso = toISODate(date);
           const dayInfo = dayInfoForDate(date);
-          const isRest = dayInfo.type === "rest";
-          const isDone = loggedDates.has(iso);
-          const isFuture = iso > today;
-          const isToday = iso === today;
-
-          let status = "rest";
-          if (!isRest) {
-            if (isDone) status = "done";
-            else if (isFuture) status = "future";
-            else status = "missed";
-          }
-
+          const status = statusFor(date);
           return (
-            <div className={`week-cell${isToday ? " is-today" : ""}`} key={iso}>
-              <div className="week-cell-day">{dayInfo.label.slice(0, 3)}</div>
-              <div className={`week-status-dot ${status === "future" ? "" : status}`}>
-                {status === "done" && <IconCheck />}
+            <div className={`schedule-row${iso === today ? " is-today" : ""}`} key={iso}>
+              <div className="schedule-date">
+                <div className="schedule-date-day">{dayInfo.label.slice(0, 3)}</div>
+                <div className="schedule-date-num">{date.getDate()}</div>
               </div>
-              <div className="week-cell-date">{date.getDate()}</div>
+              <div className="schedule-main">
+                <div className="schedule-focus">{dayInfo.type === "rest" ? "Rest" : dayInfo.focus}</div>
+                {dayInfo.type !== "rest" && <div className="schedule-meta">Rest {dayInfo.rest}</div>}
+              </div>
+              <span className={`status-pill ${status}`}>
+                {status === "done" && <IconCheck width={12} height={12} />}
+                {STATUS_LABEL[status]}
+              </span>
             </div>
           );
         })}
-      </div>
-
-      <div className="section-label">Legend</div>
-      <div className="chip-row">
-        <span className="chip">
-          <span
-            style={{
-              display: "inline-block",
-              width: 8,
-              height: 8,
-              borderRadius: 999,
-              background: "var(--accent)",
-              marginRight: 6,
-            }}
-          />
-          Completed
-        </span>
-        <span className="chip">
-          <span
-            style={{
-              display: "inline-block",
-              width: 8,
-              height: 8,
-              borderRadius: 999,
-              border: "1px solid var(--border-strong)",
-              marginRight: 6,
-            }}
-          />
-          Missed
-        </span>
-        <span className="chip">Rest day</span>
       </div>
     </div>
   );

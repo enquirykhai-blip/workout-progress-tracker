@@ -26,11 +26,20 @@ lives in `src/data/exercises.js`.
 ## Look & Feel
 
 Light, soft-card UI: a pale grey background with white rounded cards and
-soft shadows, black pill buttons, and a floating white pill bottom nav. The
-Today tab opens like a home screen — a "Welcome back" greeting (name is
-editable in the settings menu, top right), a dark hero card for the day's
-focus that jumps to the next unfinished exercise, Key Focus / Rest tiles, an
-Overall Progress ring, the collapsible gym guideline, then the exercises.
+soft shadows, black pill buttons, and a floating white pill bottom nav.
+
+- **Today** — "Welcome back" greeting (name editable in the settings menu,
+  top right), then one dark hero card with the day's focus, a progress ring
+  (exercises done), "Up next: …" and a Start/Continue button that scrolls to
+  the next unfinished exercise. Below: Key Focus / Rest tiles, the
+  collapsible gym guideline, then the exercises. A finished exercise folds
+  down to a one-line summary of its logged sets (tap to reopen). On rest
+  days the hero links to the Food tab and a card previews the next workout.
+- **Week** — days trained / consistency tiles and a 7-day schedule list
+  showing each day's focus and a Done / Missed / Today / Upcoming / Rest pill.
+- **Food** — calorie ring with an "Edit targets" button, a 2×2 macro grid,
+  meals grouped by type with an "Add food" button, and one trend chart with a
+  Calories / Protein toggle.
 
 ## Features
 
@@ -47,8 +56,8 @@ an afterthought, alongside the workout split.
 - **Personal Records** — logging a set that beats your previous best weight/reps
   for that exercise triggers a PR toast with a subtle celebration animation,
   and the exercise card shows your current best inline.
-- **Weekly Overview** — a 7-day grid showing which workout days were completed
-  vs missed this week, with prev/next week navigation.
+- **Weekly Overview** — a 7-day schedule showing which workout days were
+  completed vs missed, with prev/next week navigation.
 - **Rest Timer** — auto-starts after logging any set. Default is "Auto",
   which follows the day's plan (2 min, or 3 min on leg day); a fixed
   60–240s can be picked instead in the account menu. Shown with a floating bar showing the countdown, ±15s
