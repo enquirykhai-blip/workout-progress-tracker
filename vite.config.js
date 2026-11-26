@@ -1,14 +1,32 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'node:child_process'
+
+// Shown in Settings so devices can be compared at a glance.
+function buildVersion() {
+  let sha = ''
+  try {
+    sha = execSync('git rev-parse --short HEAD').toString().trim()
+  } catch {
+    // not a git checkout
+  }
+  const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ')
+  return sha ? `${stamp} UTC · ${sha}` : `${stamp} UTC`
+}
 
 // https://vite.dev/config/
 export default defineConfig({
   base: '/workout-progress-tracker/',
+  define: {
+    __APP_VERSION__: JSON.stringify(buildVersion()),
+  },
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt': a new version waits until the user taps "Update" (or the
+      // app is fully closed), so it never reloads mid-workout.
+      registerType: 'prompt',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Workout Progress Tracker',

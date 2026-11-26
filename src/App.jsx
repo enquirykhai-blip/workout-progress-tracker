@@ -12,6 +12,8 @@ import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
 import VoicePicker from "./components/VoicePicker";
+import UpdateBar from "./components/UpdateBar";
+import SyncInfo from "./components/SyncInfo";
 import FocusTimer from "./components/FocusTimer";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
@@ -168,6 +170,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   return (
     <div className="app-shell" data-dir={tabDir || undefined}>
       <PRToastLayer toasts={toasts} />
+      <UpdateBar />
 
       <button className="account-fab" onClick={() => setAccountOpen((v) => !v)} aria-label="Account">
         <IconSettings />
@@ -201,6 +204,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
             Sounds robotic? Pick an "Enhanced" / "Premium" voice, or on iPhone download one in Settings →
             Accessibility → Spoken Content → Voices → English.
           </div>
+          <SyncInfo />
           <button className="btn btn-secondary btn-block" onClick={onSignOut}>
             Sign Out
           </button>

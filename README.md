@@ -166,18 +166,34 @@ an afterthought, alongside the workout split.
 
 ## Data & Sync
 
-Everything is stored in `localStorage` under the `wpt.*` keys, so the app works
-fully offline:
+Workout data lives in Firestore under
+`users/{uid}/data/{sessions,dayOverrides,skippedExercises,nutrition,nutritionTargets}`
+so the same account sees the same data on every device, and is cached per
+account in `localStorage` (`wpt.<name>.v1:<uid>`) so the app opens instantly
+and works offline:
 
-- `wpt.sessions.v1` — logged sets per exercise/date
-- `wpt.dayOverrides.v1` — per-date program swaps (`{ date: programId | "rest" }`)
-- `wpt.nutrition.v1` — logged calorie/protein entries
-- `wpt.nutritionTargets.v1` — daily calorie/protein goals
+- `sessions` — logged sets per exercise/date
+- `dayOverrides` — per-date program swaps (`{ date: programId | "rest" }`)
+- `skippedExercises` — exercises removed for a date
+- `nutrition` — logged meals
+- `nutritionTargets` — daily calorie/macro goals
 
-Signing in (email/password, via Firebase Auth) also syncs each of these to
-Firestore under `users/{uid}/data/{sessions,dayOverrides,nutrition,nutritionTargets}`,
-so the same account sees the same data on any device. Recommended Firestore
-security rules (Firestore console → Rules):
+`src/hooks/useCloudState.js` treats the cloud as the source of truth:
+
+1. Nothing is written until the first snapshot **from the server** arrives,
+   so a new device (empty cache) or a stale one can never overwrite the cloud
+   while it's still loading. (Previously a device uploaded its local state
+   0.7s after opening — on a slow connection that wiped the cloud copy.)
+2. On that first snapshot the cloud value replaces the local cache — unless
+   the cloud copy is missing or empty while this device still has data, in
+   which case the device's data is uploaded (recovery / first use).
+3. After that, local edits are written (debounced) and other devices'
+   changes stream in live.
+
+Settings shows the sync state ("All changes synced", "Saving…", "Offline",
+or "Sync problem (code)") and the app version, so devices can be compared.
+
+Recommended Firestore security rules (Firestore console → Rules):
 
 ```
 rules_version = '2';
@@ -249,6 +265,12 @@ still need real network. Icons live in `public/` (`pwa-192.png`, `pwa-512.png`,
 `pwa-maskable-512.png` for Android/desktop, `apple-touch-icon.png` for iOS).
 On mobile, open the deployed URL and use the browser's "Add to Home Screen" /
 "Install app" option.
+
+Updates use `registerType: 'prompt'`: the app checks for a new deploy when it
+comes back to the foreground and every 30 minutes, and shows a "New version
+available · Update" bar instead of reloading mid-workout (a fully closed and
+reopened app also picks it up). Settings shows the build's version
+(`__APP_VERSION__`: build time + git commit) to compare devices.
 
 ## Nutrition
 
