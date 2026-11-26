@@ -1,7 +1,8 @@
 import { useCallback, useState } from "react";
 import { useCloudState } from "./hooks/useCloudState";
 import { useAuth } from "./hooks/useAuth";
-import { useRestTimer } from "./hooks/useRestTimer";
+import { useRestTimer, resolveRestSeconds } from "./hooks/useRestTimer";
+import { useExerciseTimers } from "./hooks/useExerciseTimers";
 import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
@@ -11,7 +12,6 @@ import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
-import RestTimerBar from "./components/RestTimerBar";
 import Today from "./screens/Today";
 import Weekly from "./screens/Weekly";
 import Nutrition from "./screens/Nutrition";
@@ -51,6 +51,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const restTimer = useRestTimer();
+  const exerciseTimers = useExerciseTimers();
   const fallbackName = (email || "").split("@")[0];
   const [displayName, setDisplayName] = useLocalStorageState(STORAGE_KEYS.DISPLAY_NAME, "");
 
@@ -71,12 +72,11 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
-      const duration =
-        restTimer.defaultDuration === "auto" ? restSeconds : restTimer.defaultDuration;
-      restTimer.start(duration);
+      // Each exercise runs its own rest countdown, started by logging a set.
+      exerciseTimers.start(exercise.id, resolveRestSeconds(restTimer.defaultDuration, restSeconds));
       return wasPR;
     },
-    [sessions, setSessions, showToast, restTimer]
+    [sessions, setSessions, showToast, restTimer.defaultDuration, exerciseTimers]
   );
 
   const handleDeleteSet = useCallback(
@@ -157,6 +157,8 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onGoToNutrition={() => setTab("nutrition")}
           displayName={displayName.trim() || fallbackName}
           dayOverrides={dayOverrides}
+          restPreference={restTimer.defaultDuration}
+          timers={exerciseTimers}
           onPickProgram={(date, programId) =>
             setDayOverrides((prev) => {
               const next = { ...prev };
@@ -178,12 +180,6 @@ function WorkoutApp({ uid, email, onSignOut }) {
         />
       )}
 
-      <RestTimerBar
-        active={restTimer.active}
-        remaining={restTimer.remaining}
-        addSeconds={restTimer.addSeconds}
-        skip={restTimer.skip}
-      />
       <BottomNav active={tab} onChange={setTab} />
     </div>
   );

@@ -38,8 +38,10 @@ soft shadows, black pill buttons, and a floating white pill bottom nav.
   top right), then one dark hero card with the day's focus, a progress ring
   (exercises done), "Up next: …" and a Start/Continue button that scrolls to
   the next unfinished exercise. Below: Key Focus / Rest tiles, the
-  collapsible gym guideline, then the exercises. A finished exercise folds
-  down to a one-line summary of its logged sets (tap to reopen). On rest
+  collapsible gym guideline, then the exercises as a compact accordion: each
+  is one row (number, name, muscle, set dots) and only the exercise being
+  worked on is open. When it's finished it folds to a summary of its logged
+  sets and the next one opens on its own. On rest
   days the hero links to the Food tab and a card previews the next workout.
 - **Week** — days trained / consistency tiles and a 7-day schedule list
   showing each day's focus and a Done / Missed / Today / Upcoming / Rest pill.
@@ -74,10 +76,12 @@ an afterthought, alongside the workout split.
   and the exercise card shows your current best inline.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
-- **Rest Timer** — auto-starts after logging any set. Default is "Auto",
-  which follows the day's plan (2 min, or 3 min for Legs); a fixed
-  60–240s can be picked instead in the account menu. Shown with a floating bar showing the countdown, ±15s
-  adjustment, and a skip button.
+- **Rest timer per exercise** — every exercise has its own countdown, shown
+  inside its card. It starts when a set is logged (or tap the ⏱ button), with
+  −15 / +15 / stop controls and a vibration + "Rest habis" flash at zero. A
+  collapsed exercise shows its live countdown as a chip, and timers keep
+  running across tabs. Default length is "Auto" (2 min, or 3 min for Legs);
+  60 / 120 / 180s can be picked in the account menu.
 - **Install as an app** — installable on your phone's home screen (PWA), works
   offline for the app shell once visited.
 - **Delete a set** — a × next to any already-logged set removes it and
@@ -165,15 +169,18 @@ Built with the modular Firebase JS SDK (v9+):
 
 ## Rest Timer
 
-`src/hooks/useRestTimer.js` drives a countdown off an absolute end timestamp
-(not a decrementing counter), so it stays accurate even if the tab is
-backgrounded. `App.jsx` starts it every time a set is logged, regardless of
-whether it was a PR. The duration is "Auto" by default (the day's
-`restSeconds` from `src/data/exercises.js`) or a fixed 60/120/180s —
-a per-device preference stored in `localStorage` under
-`wpt.restDuration.v2` — deliberately not synced to Firestore, since it's a
-device/UI setting rather than workout data. `src/components/RestTimerBar.jsx`
-renders the floating bar with ±15s adjustment and skip.
+`src/hooks/useExerciseTimers.js` keeps one countdown per exercise id, driven
+off absolute end timestamps (not decrementing counters) so they stay
+accurate even if the tab is backgrounded. It lives in `App.jsx`, which
+starts the exercise's timer every time a set is logged, so timers survive
+collapsing a card or switching tabs. `src/components/ExerciseLogCard.jsx`
+renders the in-card timer strip and the collapsed-row chip.
+
+`src/hooks/useRestTimer.js` holds the length preference: "Auto" by default
+(the program's `restSeconds` from `src/data/exercises.js`) or a fixed
+60/120/180s — stored per device in `localStorage` under
+`wpt.restDuration.v2`, deliberately not synced to Firestore since it's a
+device/UI setting rather than workout data.
 
 ## Installing as an App (PWA)
 

@@ -126,3 +126,12 @@ export function IconSwap(props) {
     </svg>
   );
 }
+
+export function IconTimer(props) {
+  return (
+    <svg {...common} {...props}>
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 9v4l2.5 1.5M9.5 2.5h5" />
+    </svg>
+  );
+}

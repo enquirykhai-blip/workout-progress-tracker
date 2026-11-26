@@ -7,6 +7,7 @@ import { IconArrowRight, IconChevronRight, IconSwap } from "../components/icons"
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
+import { resolveRestSeconds } from "../hooks/useRestTimer";
 
 function ProgressRing({ done, total, size = 96, stroke = 5 }) {
   const r = (size - stroke) / 2;
@@ -49,6 +50,8 @@ export default function Today({
   displayName,
   dayOverrides = {},
   onPickProgram,
+  restPreference = "auto",
+  timers,
 }) {
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date(), dayOverrides);
@@ -70,11 +73,28 @@ export default function Today({
   const doneCount = items.filter(({ exercise, target }) => isExerciseDone(exercise, target)).length;
   const nextItem = items.find(({ exercise, target }) => !isExerciseDone(exercise, target));
   const allDone = items.length > 0 && !nextItem;
+  const nextId = nextItem?.exercise.id ?? null;
+  const restSeconds = resolveRestSeconds(restPreference, dayInfo.restSeconds);
+
+  // Accordion: only one exercise is open at a time — the one being worked on.
+  // When it's finished (or the program is swapped), the next unfinished one
+  // opens on its own after a short beat so the ✓ registers first.
+  const [openId, setOpenId] = useState(nextId);
+  const prevNextId = useRef(nextId);
+  useEffect(() => {
+    if (prevNextId.current === nextId) return;
+    prevNextId.current = nextId;
+    const t = setTimeout(() => setOpenId(nextId), 500);
+    return () => clearTimeout(t);
+  }, [nextId]);
 
   function scrollToNext() {
     const target = nextItem || items[0];
     if (!target) return;
-    document.getElementById(`ex-${target.exercise.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setOpenId(target.exercise.id);
+    requestAnimationFrame(() =>
+      document.getElementById(`ex-${target.exercise.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
   }
 
   const ctaLabel = doneCount > 0 ? "Continue" : "Start now";
@@ -279,24 +299,32 @@ export default function Today({
             </div>
           </div>
 
-          {items.map(({ exercise, target }, i) => (
-            <div id={`ex-${exercise.id}`} className="exercise-anchor" key={`${exercise.id}-${date}`}>
-              <ExerciseLogCard
-                index={i + 1}
-                exercise={exercise}
-                target={target}
-                date={date}
-                day={dayInfo.key}
-                sessions={sessions}
-                done={isExerciseDone(exercise, target)}
-                onLogSet={(setNumber, weight, reps) =>
-                  onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds)
-                }
-                onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
-                onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
-              />
-            </div>
-          ))}
+          <div className="ex-list">
+            {items.map(({ exercise, target }, i) => (
+              <div id={`ex-${exercise.id}`} className="exercise-anchor" key={`${exercise.id}-${date}`}>
+                <ExerciseLogCard
+                  index={i + 1}
+                  exercise={exercise}
+                  target={target}
+                  date={date}
+                  sessions={sessions}
+                  done={isExerciseDone(exercise, target)}
+                  expanded={openId === exercise.id}
+                  onToggle={() => setOpenId((cur) => (cur === exercise.id ? null : exercise.id))}
+                  timer={timers.get(exercise.id)}
+                  restSeconds={restSeconds}
+                  onStartTimer={() => timers.start(exercise.id, restSeconds)}
+                  onAdjustTimer={(delta) => timers.adjust(exercise.id, delta)}
+                  onStopTimer={() => timers.stop(exercise.id)}
+                  onLogSet={(setNumber, weight, reps) =>
+                    onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds)
+                  }
+                  onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
+                  onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
+                />
+              </div>
+            ))}
+          </div>
         </>
       )}
 
