@@ -19,6 +19,9 @@ const TEMPOS = {
 };
 
 const PHASE_LABEL = ["Angkat", "Tahan & squeeze", "Turun"];
+// What the voice says at the start of each phase (Malay / English).
+const PHASE_CUE_MS = ["angkat", "tahan, squeeze", "turun"];
+const PHASE_CUE_EN = ["lift", "hold, squeeze", "lower"];
 const PHASE_TONE = [880, 660, 440];
 const COUNTDOWN_S = 3;
 
@@ -134,6 +137,8 @@ const STROKE = 10;
 export default function RepCoach({ exerciseName, setNumber, totalSets, targetReps = 15, weight, onFinish, onClose }) {
   const [tempoKey, setTempoKey] = useLocalStorageState(STORAGE_KEYS.REP_TEMPO, "plan");
   const [voiceOn, setVoiceOn] = useLocalStorageState(STORAGE_KEYS.REP_VOICE, true);
+  // Speak "angkat / tahan, squeeze / turun" at every phase, not just numbers.
+  const [phaseCues, setPhaseCues] = useLocalStorageState(STORAGE_KEYS.REP_PHASE_CUES, true);
   const tempo = TEMPOS[tempoKey] || TEMPOS.plan;
 
   // status: ready | countdown | running | paused | done
@@ -168,10 +173,14 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
       setStatus("done");
       return false;
     }
-    if (left === 2) say(`${malayNumber(n)}. Dua lagi!`, `${n}. Two more!`);
-    else say(malayNumber(n), String(n));
+    // The rep number and the next "angkat" land at the same instant, so they
+    // go out as one utterance instead of cutting each other off.
+    const cueMs = phaseCues ? `, ${PHASE_CUE_MS[0]}` : "";
+    const cueEn = phaseCues ? `, ${PHASE_CUE_EN[0]}` : "";
+    if (left === 2) say(`${malayNumber(n)}. Dua lagi${cueMs}!`, `${n}. Two more${cueEn}!`);
+    else say(`${malayNumber(n)}${cueMs}`, `${n}${cueEn}`);
     return true;
-  }, [goal, say, tick]);
+  }, [goal, say, tick, phaseCues]);
 
   // Main loop: advance phases on the clock.
   useEffect(() => {
@@ -193,6 +202,9 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
         setPhase(next);
         setPhaseProgress(0);
         tick(PHASE_TONE[next]);
+        // "tahan, squeeze" / "turun" — queued (not interrupting) so the rep
+        // number before it is never cut short. "angkat" rides with the number.
+        if (phaseCues && next !== 0) say(PHASE_CUE_MS[next], PHASE_CUE_EN[next], { interrupt: false });
       } else {
         setPhaseProgress(len ? elapsed / len : 1);
       }
@@ -200,13 +212,13 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
     };
     raf.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(raf.current);
-  }, [status, phases, completeRep, tick]);
+  }, [status, phases, completeRep, tick, phaseCues, say]);
 
   // 3-2-1 countdown.
   useEffect(() => {
     if (status !== "countdown") return;
     if (countdown === 0) {
-      say("Mula!", "Go!");
+      say(phaseCues ? "Mula. Angkat!" : "Mula!", phaseCues ? "Go. Lift!" : "Go!");
       eng.current.phase = 0;
       eng.current.phaseStart = performance.now();
       setPhase(0);
@@ -219,7 +231,7 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
     tick(520, 0.06, 0.12);
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
-  }, [status, countdown, say, tick]);
+  }, [status, countdown, say, tick, phaseCues]);
 
   useEffect(() => () => stopSpeech(), [stopSpeech]);
 
@@ -256,7 +268,7 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
     eng.current.phase = 0;
     eng.current.phaseStart = performance.now();
     setPhase(0);
-    say("Teruskan!", "Keep going!");
+    say(phaseCues ? "Teruskan. Angkat!" : "Teruskan!", phaseCues ? "Keep going. Lift!" : "Keep going!");
     setStatus("running");
   }
 
@@ -357,6 +369,19 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
             </button>
           ))}
         </div>
+      )}
+
+      {status === "ready" && (
+        <button
+          className={`coach-toggle${phaseCues ? " on" : ""}`}
+          onClick={() => setPhaseCues((v) => !v)}
+          aria-pressed={phaseCues}
+        >
+          <span className="coach-toggle-track">
+            <span className="coach-toggle-thumb" />
+          </span>
+          Sebut fasa (angkat · tahan · turun)
+        </button>
       )}
 
       {status === "done" && (
