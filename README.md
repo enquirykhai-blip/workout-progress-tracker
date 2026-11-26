@@ -76,6 +76,13 @@ an afterthought, alongside the workout split.
   and the exercise card shows your current best inline.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
+- **How-to demos** — every exercise has an animated stick-figure demo (in
+  the app's black-and-white style) beside 3 short "Cara buat" steps, shown at
+  the top of the open exercise. The loop follows the plan's tempo: lift,
+  hold & squeeze, slower return. Close it with ✕ (remembered); "Cara buat"
+  brings it back. Poses live in `src/data/demos.js` and are drawn by
+  `src/components/ExerciseDemo.jsx` with two-bone IK, so no image files are
+  needed and it works offline.
 - **Focus rest timer** — logging a set opens one full-screen timer: a big
   ring countdown, the exercise name, "Next up" (the next set, or the next
   exercise), and −15s / Skip rest / +15s. Minimise it to a floating pill

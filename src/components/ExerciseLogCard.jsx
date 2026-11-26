@@ -2,6 +2,8 @@ import { useState } from "react";
 import { IconCheck, IconPlus, IconClose, IconChevronRight, IconTimer } from "./icons";
 import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
 import { WARMUP_SETS } from "../data/exercises";
+import { DEMOS } from "../data/demos";
+import ExerciseDemo from "./ExerciseDemo";
 
 function buildInitialRows({ exercise, target, date, sessions }) {
   const existing = findSession(sessions, date, exercise.id);
@@ -71,6 +73,8 @@ export default function ExerciseLogCard({
   onToggle,
   restSeconds,
   onStartTimer,
+  demoOpen = true,
+  onToggleDemo,
   onLogSet,
   onDeleteSet,
   onNotesChange,
@@ -161,6 +165,29 @@ export default function ExerciseLogCard({
 
       {expanded && (
         <div className="ex-body">
+          {demoOpen && DEMOS[exercise.id] && (
+            <div className="ex-demo">
+              <div className="ex-demo-stage">
+                <ExerciseDemo exerciseId={exercise.id} />
+              </div>
+              <div className="ex-demo-text">
+                <div className="ex-demo-title">
+                  Cara buat
+                  {onToggleDemo && (
+                    <button className="ex-demo-hide" onClick={onToggleDemo} aria-label="Sembunyi demo">
+                      <IconClose width={12} height={12} />
+                    </button>
+                  )}
+                </div>
+                <ol className="ex-demo-cues">
+                  {DEMOS[exercise.id].cues.map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+          )}
+
           {(best || bestRepsOnly) && (
             <div className="ex-best">
               Best {best ? formatSet(best) : `${bestRepsOnly.reps} reps`}
@@ -231,6 +258,11 @@ export default function ExerciseLogCard({
             {!noteOpen && (
               <button className="exercise-action" onClick={() => setNoteOpen(true)}>
                 <IconPlus width={14} height={14} /> Note
+              </button>
+            )}
+            {DEMOS[exercise.id] && onToggleDemo && !demoOpen && (
+              <button className="exercise-action" onClick={onToggleDemo}>
+                Cara buat
               </button>
             )}
             <button className="exercise-action ex-rest-btn" onClick={onStartTimer} aria-label="Mula rest timer">
