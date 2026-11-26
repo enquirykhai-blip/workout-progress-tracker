@@ -6,6 +6,7 @@ import { useFocusTimer } from "./hooks/useFocusTimer";
 import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
+import { haptic } from "./utils/motion";
 import { todayISO } from "./utils/date";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { IconSettings } from "./components/icons";
@@ -37,8 +38,21 @@ export default function App() {
   return <WorkoutApp uid={user.uid} email={user.email} onSignOut={signOut} />;
 }
 
+const TAB_ORDER = ["today", "week", "nutrition"];
+
 function WorkoutApp({ uid, email, onSignOut }) {
-  const [tab, setTab] = useState("today");
+  const [tab, setTabState] = useState("today");
+  // Which way the new screen should slide in (follows the tab order).
+  const [tabDir, setTabDir] = useState(null);
+  const setTab = useCallback(
+    (next) => {
+      if (next === tab) return;
+      setTabDir(TAB_ORDER.indexOf(next) > TAB_ORDER.indexOf(tab) ? "fwd" : "back");
+      haptic(8);
+      setTabState(next);
+    },
+    [tab]
+  );
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
   // Per-date program swaps: { "YYYY-MM-DD": programId | "rest" }.
   const [dayOverrides, setDayOverrides] = useCloudState(STORAGE_KEYS.DAY_OVERRIDES, "dayOverrides", {}, uid);
@@ -117,7 +131,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   );
 
   return (
-    <div className="app-shell">
+    <div className="app-shell" data-dir={tabDir || undefined}>
       <PRToastLayer toasts={toasts} />
 
       <button className="account-fab" onClick={() => setAccountOpen((v) => !v)} aria-label="Account">

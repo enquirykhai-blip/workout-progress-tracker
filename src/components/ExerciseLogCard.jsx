@@ -4,6 +4,7 @@ import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps
 import { WARMUP_SETS } from "../data/exercises";
 import { DEMOS } from "../data/demos";
 import ExerciseDemo from "./ExerciseDemo";
+import { haptic } from "../utils/motion";
 
 function buildInitialRows({ exercise, target, date, sessions }) {
   const existing = findSession(sessions, date, exercise.id);
@@ -105,6 +106,7 @@ export default function ExerciseLogCard({
     if (reps != null && (Number.isNaN(reps) || reps < 0)) return;
 
     const isPR = onLogSet(row.setNumber, weight, reps);
+    haptic(isPR ? [12, 60, 24] : 12);
     // Carry this weight into the next untouched set so the same number
     // doesn't have to be typed twice.
     setRows((prev) =>

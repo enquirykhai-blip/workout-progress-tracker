@@ -10,9 +10,15 @@ import { STORAGE_KEYS } from "../utils/storage";
 import { resolveRestSeconds } from "../hooks/useRestTimer";
 
 function ProgressRing({ done, total, size = 96, stroke = 5 }) {
+  // Starts empty and sweeps to the current value on first paint.
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntered(true)));
+    return () => cancelAnimationFrame(id);
+  }, []);
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
-  const pct = total ? done / total : 0;
+  const pct = entered && total ? done / total : 0;
   return (
     <div className="progress-ring" style={{ width: size, height: size }}>
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
@@ -28,7 +34,7 @@ function ProgressRing({ done, total, size = 96, stroke = 5 }) {
           strokeDasharray={c}
           strokeDashoffset={c * (1 - pct)}
           transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          style={{ transition: "stroke-dashoffset 0.4s ease" }}
+          style={{ transition: "stroke-dashoffset 0.9s cubic-bezier(0.32, 0.72, 0, 1)" }}
         />
       </svg>
       <div className="progress-ring-center">

@@ -12,7 +12,7 @@ const common = {
 export function IconCheck(props) {
   return (
     <svg {...common} {...props}>
-      <path d="m5 13 4.5 4.5L19 7.5" />
+      <path d="m5 13 4.5 4.5L19 7.5" pathLength="1" />
     </svg>
   );
 }
