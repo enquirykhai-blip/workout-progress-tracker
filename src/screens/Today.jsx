@@ -57,6 +57,7 @@ export default function Today({
   const dayInfo = dayInfoForDate(new Date(), dayOverrides);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useLocalStorageState(STORAGE_KEYS.GUIDE_OPEN, false);
+  const [demoOpen, setDemoOpen] = useLocalStorageState(STORAGE_KEYS.DEMO_OPEN, true);
 
   const items =
     dayInfo.type === "workout"
@@ -320,6 +321,8 @@ export default function Today({
                   expanded={openId === exercise.id}
                   onToggle={() => setOpenId((cur) => (cur === exercise.id ? null : exercise.id))}
                   restSeconds={restSeconds}
+                  demoOpen={demoOpen}
+                  onToggleDemo={() => setDemoOpen((v) => !v)}
                   onStartTimer={() => {
                     const logged = findSession(sessions, date, exercise.id)?.sets.length || 0;
                     onStartRest?.(restSeconds, {

@@ -7,23 +7,7 @@ const common = {
   viewBox: "0 0 24 24",
 };
 
-export function IconToday(props) {
-  return (
-    <svg {...common} {...props}>
-      <path d="M6.5 7V4.5M17.5 7V4.5M4 9.5h16M5 4.5h14a1 1 0 0 1 1 1V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5.5a1 1 0 0 1 1-1Z" />
-      <path d="m9 13.5 2 2 4-4.5" />
-    </svg>
-  );
-}
 
-export function IconCalendar(props) {
-  return (
-    <svg {...common} {...props}>
-      <rect x="4" y="5" width="16" height="15" rx="2" />
-      <path d="M4 10h16M8 3v3M16 3v3" />
-    </svg>
-  );
-}
 
 export function IconCheck(props) {
   return (
@@ -83,14 +67,6 @@ export function IconTrophy(props) {
   );
 }
 
-export function IconFlame(props) {
-  return (
-    <svg {...common} {...props}>
-      <path d="M12 3c.6 2.1-.4 3.3-1.6 4.6C9.2 8.9 8 10.4 8 12.5a4 4 0 0 0 8 0c0-1.2-.5-2-1-2.7.1 1-.3 1.7-1 1.7-.8 0-1.3-.7-1.2-1.6.2-1.6 1.2-2.6 1.2-4.4C14 4.3 13.2 3.5 12 3Z" />
-      <path d="M9.5 15.5a2.5 2.5 0 0 0 5 0" />
-    </svg>
-  );
-}
 
 export function IconCamera(props) {
   return (

@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   REST_DURATION: "wpt.restDuration.v2",
   GUIDE_OPEN: "wpt.guideOpen.v1",
   DAY_OVERRIDES: "wpt.dayOverrides.v1",
+  DEMO_OPEN: "wpt.demoOpen.v1",
   DISPLAY_NAME: "wpt.displayName.v1",
   NUTRITION: "wpt.nutrition.v1",
   NUTRITION_TARGETS: "wpt.nutritionTargets.v1",
