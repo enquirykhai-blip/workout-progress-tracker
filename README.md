@@ -133,6 +133,15 @@ an afterthought, alongside the workout split.
   account menu.
 - **Install as an app** — installable on your phone's home screen (PWA), works
   offline for the app shell once visited.
+- **Undo / reset sets** — tap a logged ✓ again to un-log that set (the
+  numbers stay, it just stops counting). "↺ Reset" in an open exercise
+  clears all of today's sets for it after a second "Tap to confirm".
+- **Swipe to remove** — swipe an exercise row left to remove it for today
+  (it drops out of the list, progress and Focus Mode). An "Undo" bar shows
+  for 5s, and "N exercises removed for today · Show" brings them back.
+  Stored per date and synced (`wpt.skippedExercises.v1`).
+- **Edit meals** — tap a logged meal to reopen it in the sheet (prefilled),
+  change anything, then "Save Changes" — or "Delete" from there.
 - **Delete a set** — a × next to any already-logged set removes it and
   renumbers the rest, for fixing a mis-log without editing storage by hand.
 - **Rest day** — instead of a workout list, shows a recovery message and a

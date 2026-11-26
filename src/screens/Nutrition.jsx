@@ -117,7 +117,7 @@ function macroDetail(e) {
   return parts.join(" · ");
 }
 
-export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry, onUpdateTargets }) {
+export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry, onUpdateEntry, onUpdateTargets }) {
   const date = todayISO();
   const totals = totalsForDate(entries, date);
   // Older saved targets may predate carbs/fat/fiber tracking — fill in sane defaults.
@@ -125,6 +125,8 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
   const mealGroups = groupEntriesByMealType(entries, date);
 
   const [addOpen, setAddOpen] = useState(false);
+  // Set when the sheet is editing an existing entry instead of adding one.
+  const [editingId, setEditingId] = useState(null);
   const [targetsOpen, setTargetsOpen] = useState(false);
   const [trend, setTrend] = useState("calories");
   const [mealType, setMealType] = useState(() => currentMealType());
@@ -159,9 +161,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     const ft = toIntOrNull(fat);
     const fib = toIntOrNull(fiber);
     if (cals == null && prot == null && carb == null && ft == null && fib == null) return;
-    onAddEntry({
-      id: makeId(),
-      date,
+    const fields = {
       label: label.trim(),
       calories: cals,
       protein: prot,
@@ -169,7 +169,10 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
       fat: ft,
       fiber: fib,
       mealType,
-    });
+    };
+    if (editingId) onUpdateEntry?.({ id: editingId, ...fields });
+    else onAddEntry({ id: makeId(), date, ...fields });
+    setEditingId(null);
     setLabel("");
     setCalories("");
     setProtein("");
@@ -181,6 +184,50 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
     setPasteNote("");
     setPasteOpen(false);
     setAddOpen(false);
+  }
+
+  const str = (v) => (v == null ? "" : String(v));
+
+  function resetForm() {
+    setLabel("");
+    setCalories("");
+    setProtein("");
+    setCarbs("");
+    setFat("");
+    setFiber("");
+    setScanConfidence(null);
+    setScanSource(null);
+    setPasteNote("");
+    setPasteOpen(false);
+  }
+
+  function openAdd() {
+    setEditingId(null);
+    resetForm();
+    setMealType(currentMealType());
+    setAddOpen(true);
+  }
+
+  // Tap a logged meal to edit it in the same sheet, prefilled.
+  function openEdit(entry) {
+    resetForm();
+    setEditingId(entry.id);
+    setMealType(entry.mealType || currentMealType());
+    setLabel(entry.label || "");
+    setCalories(str(entry.calories));
+    setProtein(str(entry.protein));
+    setCarbs(str(entry.carbs));
+    setFat(str(entry.fat));
+    setFiber(str(entry.fiber));
+    setAddOpen(true);
+  }
+
+  function closeSheet() {
+    setAddOpen(false);
+    if (editingId) {
+      setEditingId(null);
+      resetForm();
+    }
   }
 
   async function handlePhotoSelected(e) {
@@ -293,7 +340,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
       <div className="section-head">
         <h2 className="section-title">Meals</h2>
-        <button className="pill-btn" onClick={() => setAddOpen(true)}>
+        <button className="pill-btn" onClick={openAdd}>
           <IconPlus width={14} height={14} /> Add food
         </button>
       </div>
@@ -309,11 +356,14 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
             <div className="card">
               {group.entries.map((e) => (
                 <div className="nutrition-row" key={e.id}>
-                  <div className="nutrition-row-icon">{group.emoji}</div>
-                  <div className="nutrition-row-main">
-                    <div className="nutrition-row-label">{e.label || group.label}</div>
-                    <div className="nutrition-row-detail">{macroDetail(e)}</div>
-                  </div>
+                  <button className="nutrition-row-edit" onClick={() => openEdit(e)} aria-label={`Edit ${e.label || group.label}`}>
+                    <span className="nutrition-row-icon">{group.emoji}</span>
+                    <span className="nutrition-row-main">
+                      <span className="nutrition-row-label">{e.label || group.label}</span>
+                      <span className="nutrition-row-detail">{macroDetail(e)}</span>
+                    </span>
+                    <span className="nutrition-row-pen" aria-hidden="true">✎</span>
+                  </button>
                   <button className="set-delete-btn" onClick={() => onDeleteEntry(e.id)} aria-label="Delete entry">
                     <IconClose width={14} height={14} />
                   </button>
@@ -323,7 +373,7 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
           </div>
         ))
       ) : (
-        <button className="card empty-card" onClick={() => setAddOpen(true)}>
+        <button className="card empty-card" onClick={openAdd}>
           <span className="empty-card-icon">🍽️</span>
           <span className="empty-card-title">Nothing logged yet today</span>
           <span className="empty-card-sub">Tap to add — scan a photo, type it, or paste macros.</span>
@@ -361,12 +411,25 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
 
       {addOpen && (
         <Sheet
-          title="Add Food"
-          onClose={() => setAddOpen(false)}
+          title={editingId ? "Edit Food" : "Add Food"}
+          onClose={closeSheet}
           footer={
-            <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={allFieldsBlank}>
-              Add Entry
-            </button>
+            <div className="sheet-footer-row">
+              {editingId && (
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    onDeleteEntry(editingId);
+                    closeSheet();
+                  }}
+                >
+                  Delete
+                </button>
+              )}
+              <button className="btn btn-primary btn-block" onClick={handleAdd} disabled={allFieldsBlank}>
+                {editingId ? "Save Changes" : "Add Entry"}
+              </button>
+            </div>
           }
         >
           <div className="chip-row" style={{ marginBottom: 14 }}>

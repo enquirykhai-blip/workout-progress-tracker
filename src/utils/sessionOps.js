@@ -109,3 +109,23 @@ export function updateNotes(sessions, date, exerciseId, day, notes) {
 export function datesWithSessions(sessions) {
   return new Set(sessions.filter((s) => s.sets.length > 0).map((s) => s.date));
 }
+
+// Un-logs one set without renumbering the others, so the remaining sets keep
+// the row they were logged in. Drops the session if no sets (and no notes)
+// are left.
+export function unlogSet(sessions, date, exerciseId, setNumber) {
+  return sessions
+    .map((s) =>
+      s.date === date && s.exerciseId === exerciseId
+        ? { ...s, sets: s.sets.filter((set) => set.setNumber !== setNumber) }
+        : s
+    )
+    .filter((s) => s.sets.length > 0 || s.notes);
+}
+
+// Clears every logged set of an exercise for a date (notes are kept).
+export function clearExerciseDay(sessions, date, exerciseId) {
+  return sessions
+    .map((s) => (s.date === date && s.exerciseId === exerciseId ? { ...s, sets: [] } : s))
+    .filter((s) => s.sets.length > 0 || s.notes);
+}

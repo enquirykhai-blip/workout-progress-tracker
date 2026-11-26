@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { IconCheck, IconPlus, IconClose, IconChevronRight, IconTimer } from "./icons";
 import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
 import { WARMUP_SETS } from "../data/exercises";
@@ -79,6 +79,9 @@ export default function ExerciseLogCard({
   onToggleDemo,
   onLogSet,
   onDeleteSet,
+  onUnlogSet,
+  onReset,
+  onSkip,
   onNotesChange,
 }) {
   const [rows, setRows] = useState(() => buildInitialRows({ exercise, target, date, sessions }));
@@ -98,6 +101,91 @@ export default function ExerciseLogCard({
 
   // Weight and reps are each optional — log with just one filled in
   // (bodyweight exercises need only reps; some sets only need weight noted).
+  // Tapping a ✓ that's already logged (and unchanged) un-logs that set:
+  // the numbers stay in the boxes, the set just isn't counted any more.
+  function handleCheck(i) {
+    if (matchesSaved(rows[i]) && onUnlogSet) {
+      onUnlogSet(rows[i].setNumber);
+      haptic(8);
+      updateRow(i, { saved: null });
+      return;
+    }
+    handleSave(i);
+  }
+
+  // Reset needs a second tap within 3s, so it can't happen by accident.
+  const [confirmReset, setConfirmReset] = useState(false);
+  useEffect(() => {
+    if (!confirmReset) return;
+    const t = setTimeout(() => setConfirmReset(false), 3000);
+    return () => clearTimeout(t);
+  }, [confirmReset]);
+
+  function handleReset() {
+    if (!confirmReset) {
+      setConfirmReset(true);
+      haptic(8);
+      return;
+    }
+    setConfirmReset(false);
+    onReset?.();
+    haptic([10, 40, 10]);
+    setRows((prev) => prev.slice(0, Math.max(target.sets, 1)).map((r) => ({ ...r, saved: null })));
+  }
+
+  // Swipe the row left to remove the exercise for today.
+  const SWIPE_REMOVE = 110;
+  const [dragX, setDragX] = useState(0);
+  const [removing, setRemoving] = useState(false);
+  const drag = useRef(null);
+
+  function onPointerDown(e) {
+    if (!onSkip || e.pointerType === "mouse" && e.button !== 0) return;
+    drag.current = { x: e.clientX, y: e.clientY, active: false, moved: false };
+  }
+
+  function onPointerMove(e) {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    const dy = e.clientY - d.y;
+    if (!d.active) {
+      if (Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy) * 1.3 && dx < 0) {
+        d.active = true;
+        e.currentTarget.setPointerCapture?.(e.pointerId);
+      } else if (Math.abs(dy) > 10) {
+        drag.current = null; // vertical scroll wins
+        return;
+      } else return;
+    }
+    d.moved = true;
+    // Rubber-band past the threshold.
+    const x = Math.min(0, dx);
+    setDragX(x < -SWIPE_REMOVE ? -SWIPE_REMOVE + (x + SWIPE_REMOVE) * 0.35 : x);
+  }
+
+  function onPointerUp() {
+    const d = drag.current;
+    drag.current = null;
+    if (!d?.active) return;
+    if (dragX <= -SWIPE_REMOVE * 0.85) {
+      haptic(14);
+      setRemoving(true);
+      setTimeout(() => onSkip(), 260);
+    } else setDragX(0);
+    // Swallow the click that follows a drag so the card doesn't toggle.
+    if (d.moved) suppressClick.current = true;
+  }
+
+  const suppressClick = useRef(false);
+  function onHeadClick() {
+    if (suppressClick.current) {
+      suppressClick.current = false;
+      return;
+    }
+    onToggle();
+  }
+
   function handleSave(i, override = {}) {
     const row = { ...rows[i], ...override };
     const weight = row.weight === "" ? null : parseFloat(row.weight);
@@ -155,8 +243,27 @@ export default function ExerciseLogCard({
       : [exercise.target, exercise.kind, `${target.sets} × ${target.repRange}`].filter(Boolean).join(" · ");
 
   return (
-    <div className={`card ex-card${done ? " is-done" : ""}${expanded ? " is-open" : ""}`}>
-      <button className="ex-head" onClick={onToggle} aria-expanded={expanded}>
+    <div className={`ex-swipe${removing ? " is-removing" : ""}`}>
+      {onSkip && (
+        <div className="ex-swipe-bg" aria-hidden="true" style={{ opacity: Math.min(1, -dragX / 60) }}>
+          <span className={`ex-swipe-label${dragX <= -SWIPE_REMOVE * 0.85 ? " armed" : ""}`}>
+            <IconClose width={14} height={14} /> Remove
+          </span>
+        </div>
+      )}
+    <div
+      className={`card ex-card${done ? " is-done" : ""}${expanded ? " is-open" : ""}${dragX ? " is-dragging" : ""}`}
+      style={dragX || removing ? { transform: `translateX(${removing ? -420 : dragX}px)` } : undefined}
+    >
+      <button
+        className="ex-head"
+        onClick={onHeadClick}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        aria-expanded={expanded}
+      >
         <span className={`ex-index${done ? " done" : ""}`}>
           {done ? <IconCheck width={14} height={14} /> : index}
         </span>
@@ -243,7 +350,7 @@ export default function ExerciseLogCard({
                   </div>
                   <button
                     className={`set-log-btn${isSaved ? " done" : ""}${prRowIndex === i ? " pr" : ""}`}
-                    onClick={() => handleSave(i)}
+                    onClick={() => handleCheck(i)}
                     disabled={row.weight === "" && row.reps === ""}
                     aria-label={`Log set ${row.setNumber}`}
                   >
@@ -293,6 +400,15 @@ export default function ExerciseLogCard({
                 How to
               </button>
             )}
+            {onReset && (loggedSets.length > 0 || confirmReset) && (
+              <button
+                className={`exercise-action ex-reset${confirmReset ? " confirm" : ""}`}
+                onClick={handleReset}
+                aria-label="Reset this exercise"
+              >
+                {confirmReset ? "Tap to confirm" : "↺ Reset"}
+              </button>
+            )}
             <button className="exercise-action ex-rest-btn" onClick={onStartTimer} aria-label="Start rest timer">
               <IconTimer width={14} height={14} /> {formatClock(restSeconds)}
             </button>
@@ -322,6 +438,7 @@ export default function ExerciseLogCard({
           )}
         </div>
       )}
+    </div>
     </div>
   );
 }

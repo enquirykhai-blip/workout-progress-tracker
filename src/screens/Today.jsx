@@ -59,6 +59,10 @@ export default function Today({
   onPickProgram,
   restPreference = "auto",
   onStartRest,
+  onUnlogSet,
+  onResetExercise,
+  skippedIds = [],
+  onSkipExercise,
 }) {
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date(), dayOverrides);
@@ -69,13 +73,25 @@ export default function Today({
   const [guideOpen, setGuideOpen] = useLocalStorageState(STORAGE_KEYS.GUIDE_OPEN, false);
   const [demoOpen, setDemoOpen] = useLocalStorageState(STORAGE_KEYS.DEMO_OPEN, true);
 
-  const items =
+  const allItems =
     dayInfo.type === "workout"
       ? PROGRAM[dayInfo.programId].map((entry) => ({
           exercise: EXERCISE_MAP[entry.exerciseId],
           target: entry,
         }))
       : [];
+  // Exercises swiped away for today are left out everywhere (list, progress,
+  // Focus Mode) until restored.
+  const items = allItems.filter(({ exercise }) => !skippedIds.includes(exercise.id));
+  const hiddenCount = allItems.length - items.length;
+
+  // "Removed X · Undo" bar after a swipe.
+  const [lastRemoved, setLastRemoved] = useState(null);
+  useEffect(() => {
+    if (!lastRemoved) return;
+    const t = setTimeout(() => setLastRemoved(null), 5000);
+    return () => clearTimeout(t);
+  }, [lastRemoved]);
 
   const isExerciseDone = (exercise, target) => {
     const session = findSession(sessions, date, exercise.id);
@@ -349,11 +365,30 @@ export default function Today({
                     })
                   }
                   onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
+                  onUnlogSet={onUnlogSet ? (setNumber) => onUnlogSet(exercise, setNumber) : undefined}
+                  onReset={onResetExercise ? () => onResetExercise(exercise) : undefined}
+                  onSkip={
+                    onSkipExercise
+                      ? () => {
+                          onSkipExercise(date, exercise.id, true);
+                          setLastRemoved(exercise);
+                        }
+                      : undefined
+                  }
                   onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
                 />
               </div>
             ))}
           </div>
+
+          {hiddenCount > 0 && (
+            <button
+              className="hidden-note"
+              onClick={() => allItems.forEach(({ exercise }) => onSkipExercise?.(date, exercise.id, false))}
+            >
+              {hiddenCount} exercise{hiddenCount > 1 ? "s" : ""} removed for today · Show
+            </button>
+          )}
         </>
       )}
 
@@ -372,6 +407,20 @@ export default function Today({
             setCardsVersion((v) => v + 1);
           }}
         />
+      )}
+
+      {lastRemoved && (
+        <div className="undo-bar" role="status">
+          <span>Removed {lastRemoved.name}</span>
+          <button
+            onClick={() => {
+              onSkipExercise?.(date, lastRemoved.id, false);
+              setLastRemoved(null);
+            }}
+          >
+            Undo
+          </button>
+        </div>
       )}
 
       {pickerOpen && (

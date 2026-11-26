@@ -4,7 +4,7 @@ import { useAuth } from "./hooks/useAuth";
 import { useRestTimer, resolveRestSeconds } from "./hooks/useRestTimer";
 import { useFocusTimer } from "./hooks/useFocusTimer";
 import { STORAGE_KEYS } from "./utils/storage";
-import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
+import { upsertSet, updateNotes, isPR, findSession, removeSet, unlogSet, clearExerciseDay } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { haptic } from "./utils/motion";
 import { todayISO } from "./utils/date";
@@ -57,6 +57,8 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
   // Per-date program swaps: { "YYYY-MM-DD": programId | "rest" }.
   const [dayOverrides, setDayOverrides] = useCloudState(STORAGE_KEYS.DAY_OVERRIDES, "dayOverrides", {}, uid);
+  // Exercises removed for a given day (swipe left): { "YYYY-MM-DD": [exerciseId, …] }.
+  const [skipped, setSkipped] = useCloudState(STORAGE_KEYS.SKIPPED, "skippedExercises", {}, uid);
   const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
   const [nutritionTargets, setNutritionTargets] = useCloudState(
     STORAGE_KEYS.NUTRITION_TARGETS,
@@ -111,6 +113,35 @@ function WorkoutApp({ uid, email, onSignOut }) {
       });
     },
     [setSessions]
+  );
+
+  // Tapping a logged ✓ again un-logs that set; Reset clears the exercise.
+  const handleUnlogSet = useCallback(
+    (exercise, setNumber) => setSessions((prev) => unlogSet(prev, todayISO(), exercise.id, setNumber)),
+    [setSessions]
+  );
+
+  const handleResetExercise = useCallback(
+    (exercise) => setSessions((prev) => clearExerciseDay(prev, todayISO(), exercise.id)),
+    [setSessions]
+  );
+
+  const handleSkipExercise = useCallback(
+    (date, exerciseId, skip) =>
+      setSkipped((prev) => {
+        const list = prev[date] || [];
+        const nextList = skip ? [...new Set([...list, exerciseId])] : list.filter((id) => id !== exerciseId);
+        const next = { ...prev };
+        if (nextList.length) next[date] = nextList;
+        else delete next[date];
+        return next;
+      }),
+    [setSkipped]
+  );
+
+  const handleUpdateNutritionEntry = useCallback(
+    (entry) => setNutrition((prev) => prev.map((e) => (e.id === entry.id ? { ...e, ...entry } : e))),
+    [setNutrition]
   );
 
   const handleNotesChange = useCallback(
@@ -181,6 +212,10 @@ function WorkoutApp({ uid, email, onSignOut }) {
           sessions={sessions}
           onLogSet={handleLogSet}
           onDeleteSet={handleDeleteSet}
+          onUnlogSet={handleUnlogSet}
+          onResetExercise={handleResetExercise}
+          skippedIds={skipped[todayISO()] || []}
+          onSkipExercise={handleSkipExercise}
           onNotesChange={handleNotesChange}
           onGoToNutrition={() => setTab("nutrition")}
           displayName={displayName.trim() || fallbackName}
@@ -204,6 +239,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
           targets={nutritionTargets}
           onAddEntry={handleAddNutritionEntry}
           onDeleteEntry={handleDeleteNutritionEntry}
+          onUpdateEntry={handleUpdateNutritionEntry}
           onUpdateTargets={setNutritionTargets}
         />
       )}
