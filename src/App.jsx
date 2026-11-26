@@ -20,7 +20,18 @@ import Nutrition from "./screens/Nutrition";
 export default function App() {
   const { user, loading, signIn, signUp, signOut } = useAuth();
 
-  if (loading) return <div className="app-shell" />;
+  // Doherty Threshold: show something instantly instead of a blank screen
+  // while the saved session is being restored.
+  if (loading)
+    return (
+      <div className="app-shell">
+        <div className="screen">
+          <div className="skeleton skeleton-row" />
+          <div className="skeleton skeleton-hero" />
+          <div className="skeleton skeleton-card" />
+        </div>
+      </div>
+    );
   if (!user) return <AuthScreen signIn={signIn} signUp={signUp} />;
 
   return <WorkoutApp uid={user.uid} email={user.email} onSignOut={signOut} />;

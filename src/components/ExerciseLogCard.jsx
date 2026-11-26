@@ -88,7 +88,15 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
     if (reps != null && (Number.isNaN(reps) || reps < 0)) return;
 
     const isPR = onLogSet(row.setNumber, weight, reps);
-    updateRow(index, { saved: { weight, reps } });
+    // Tesler's Law: carry this weight into the next untouched set so the
+    // user doesn't have to type the same number twice.
+    setRows((prev) =>
+      prev.map((r, i) => {
+        if (i === index) return { ...r, saved: { weight, reps } };
+        if (i === index + 1 && !r.saved && r.weight === "" && weight != null) return { ...r, weight: String(weight) };
+        return r;
+      })
+    );
     if (isPR) {
       setPrRowIndex(index);
       setTimeout(() => setPrRowIndex((cur) => (cur === index ? null : cur)), 550);
@@ -141,18 +149,17 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
           </div>
         </div>
         <div className="exercise-head-side">
-          {best ? (
-            <div className="exercise-best">
-              Best {best.weight}kg{best.reps > 0 ? ` × ${best.reps}` : ""}
-            </div>
-          ) : (
-            bestRepsOnly && <div className="exercise-best">Best {bestRepsOnly.reps} reps</div>
-          )}
           <span className={`exercise-chevron${expanded ? " open" : ""}`}>
             <IconChevronRight />
           </span>
         </div>
       </button>
+
+      {expanded && (best || bestRepsOnly) && (
+        <div className="exercise-best">
+          Best: {best ? `${best.weight}kg${best.reps > 0 ? ` × ${best.reps}` : ""}` : `${bestRepsOnly.reps} reps`}
+        </div>
+      )}
 
       {!expanded && summary && <div className="exercise-summary">{summary}</div>}
 
