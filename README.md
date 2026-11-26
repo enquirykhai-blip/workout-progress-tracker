@@ -1,6 +1,6 @@
 # Workout Progress Tracker
 
-A mobile-first web app for tracking a 5-day workout split. Built with React + Vite,
+A mobile-first web app for tracking a 4-day workout split. Built with React + Vite,
 charts via Recharts. Data is stored locally in the browser and synced across devices
 via Firebase (Firestore + email/password auth) when signed in.
 
@@ -10,10 +10,16 @@ via Firebase (Firestore + email/password auth) when signed in.
 |---|---|---|
 | Selasa | Back | 2–3 mins |
 | Rabu | Shoulder | 2–3 mins |
-| Khamis | Legs | 3–4 mins |
 | Jumaat | Bicep + Forearm | 2–3 mins |
 | Sabtu | Tricep | 2–3 mins |
-| Ahad / Isnin | Rest | — |
+| Ahad / Isnin / Khamis | Rest | — |
+
+**Legs** (3–4 mins rest) stays in the program library but isn't on the
+default schedule. On any day, **Tukar** (or **Nak workout?** on a rest day)
+opens a picker to run any program — Back, Shoulder, Legs, Bicep + Forearm,
+Tricep — or make it a rest day, for that date only. Swaps show as "Ditukar"
+on Today and in the Week schedule; picking the weekday's own default clears
+the swap.
 
 Every exercise is 2 sets × 15 reps, both working sets taken to failure
 (warm up lightly first), with a slow tempo (hold and squeeze 4 seconds
@@ -32,8 +38,10 @@ soft shadows, black pill buttons, and a floating white pill bottom nav.
   top right), then one dark hero card with the day's focus, a progress ring
   (exercises done), "Up next: …" and a Start/Continue button that scrolls to
   the next unfinished exercise. Below: Key Focus / Rest tiles, the
-  collapsible gym guideline, then the exercises. A finished exercise folds
-  down to a one-line summary of its logged sets (tap to reopen). On rest
+  collapsible gym guideline, then the exercises as a compact accordion: each
+  is one row (number, name, muscle, set dots) and only the exercise being
+  worked on is open. When it's finished it folds to a summary of its logged
+  sets and the next one opens on its own. On rest
   days the hero links to the Food tab and a card previews the next workout.
 - **Week** — days trained / consistency tiles and a 7-day schedule list
   showing each day's focus and a Done / Missed / Today / Upcoming / Rest pill.
@@ -68,10 +76,13 @@ an afterthought, alongside the workout split.
   and the exercise card shows your current best inline.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
-- **Rest Timer** — auto-starts after logging any set. Default is "Auto",
-  which follows the day's plan (2 min, or 3 min on leg day); a fixed
-  60–240s can be picked instead in the account menu. Shown with a floating bar showing the countdown, ±15s
-  adjustment, and a skip button.
+- **Focus rest timer** — logging a set opens one full-screen timer: a big
+  ring countdown, the exercise name, "Next up" (the next set, or the next
+  exercise), and −15s / Skip rest / +15s. Minimise it to a floating pill
+  (tap to reopen). At zero the phone vibrates, it shows "GO!" and closes on
+  its own. The ⏱ button in an exercise opens it manually. Default length is
+  "Auto" (2 min, or 3 min for Legs); 60 / 120 / 180s can be picked in the
+  account menu.
 - **Install as an app** — installable on your phone's home screen (PWA), works
   offline for the app shell once visited.
 - **Delete a set** — a × next to any already-logged set removes it and
@@ -102,11 +113,12 @@ Everything is stored in `localStorage` under the `wpt.*` keys, so the app works
 fully offline:
 
 - `wpt.sessions.v1` — logged sets per exercise/date
+- `wpt.dayOverrides.v1` — per-date program swaps (`{ date: programId | "rest" }`)
 - `wpt.nutrition.v1` — logged calorie/protein entries
 - `wpt.nutritionTargets.v1` — daily calorie/protein goals
 
 Signing in (email/password, via Firebase Auth) also syncs each of these to
-Firestore under `users/{uid}/data/{sessions,nutrition,nutritionTargets}`,
+Firestore under `users/{uid}/data/{sessions,dayOverrides,nutrition,nutritionTargets}`,
 so the same account sees the same data on any device. Recommended Firestore
 security rules (Firestore console → Rules):
 
@@ -158,15 +170,18 @@ Built with the modular Firebase JS SDK (v9+):
 
 ## Rest Timer
 
-`src/hooks/useRestTimer.js` drives a countdown off an absolute end timestamp
-(not a decrementing counter), so it stays accurate even if the tab is
-backgrounded. `App.jsx` starts it every time a set is logged, regardless of
-whether it was a PR. The duration is "Auto" by default (the day's
-`restSeconds` from `src/data/exercises.js`) or a fixed 60/120/180s —
-a per-device preference stored in `localStorage` under
-`wpt.restDuration.v2` — deliberately not synced to Firestore, since it's a
-device/UI setting rather than workout data. `src/components/RestTimerBar.jsx`
-renders the floating bar with ±15s adjustment and skip.
+`src/hooks/useFocusTimer.js` keeps the single rest countdown, driven off an
+absolute end timestamp (not a decrementing counter) so it stays accurate
+even if the tab is backgrounded. It lives in `App.jsx`, which starts it
+every time a set is logged, so it survives switching tabs.
+`src/components/FocusTimer.jsx` renders the full-screen timer and the
+minimised pill.
+
+`src/hooks/useRestTimer.js` holds the length preference: "Auto" by default
+(the program's `restSeconds` from `src/data/exercises.js`) or a fixed
+60/120/180s — stored per device in `localStorage` under
+`wpt.restDuration.v2`, deliberately not synced to Firestore since it's a
+device/UI setting rather than workout data.
 
 ## Installing as an App (PWA)
 

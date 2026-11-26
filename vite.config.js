@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: 'Workout Progress Tracker',
         short_name: 'Workout',
-        description: 'Track your 5-day workout split — log sets, hit PRs, watch your progress.',
+        description: 'Track your 4-day workout split — log sets, hit PRs, watch your progress.',
         theme_color: '#efefef',
         background_color: '#efefef',
         display: 'standalone',

@@ -118,3 +118,20 @@ export function IconArrowRight(props) {
     </svg>
   );
 }
+
+export function IconSwap(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M7 4 4 7l3 3M4 7h13M17 20l3-3-3-3M20 17H7" />
+    </svg>
+  );
+}
+
+export function IconTimer(props) {
+  return (
+    <svg {...common} {...props}>
+      <circle cx="12" cy="13" r="8" />
+      <path d="M12 9v4l2.5 1.5M9.5 2.5h5" />
+    </svg>
+  );
+}

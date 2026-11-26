@@ -1,9 +1,9 @@
-import { useEffect, useRef, useState } from "react";
-import { IconCheck, IconPlus, IconClose, IconChevronRight } from "./icons";
+import { useState } from "react";
+import { IconCheck, IconPlus, IconClose, IconChevronRight, IconTimer } from "./icons";
 import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
 import { WARMUP_SETS } from "../data/exercises";
 
-function buildInitialRows({ exercise, target, date, day, sessions }) {
+function buildInitialRows({ exercise, target, date, sessions }) {
   const existing = findSession(sessions, date, exercise.id);
   const rowCount = Math.max(target.sets, existing?.sets.length || 0);
 
@@ -46,41 +46,54 @@ function matchesSaved(row) {
   return savedWeightStr === row.weight && savedRepsStr === row.reps;
 }
 
-export default function ExerciseLogCard({ index, exercise, target, date, day, sessions, done, onLogSet, onDeleteSet, onNotesChange }) {
-  const [rows, setRows] = useState(() => buildInitialRows({ exercise, target, date, day, sessions }));
+function formatClock(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+function formatSet(set) {
+  return set.weight != null ? `${set.weight}kg${set.reps != null ? ` × ${set.reps}` : ""}` : `${set.reps} reps`;
+}
+
+// One exercise in today's list. Collapsed it's a single compact row (number,
+// name, muscle, set dots); expanded it shows the set inputs. Only one card is
+// open at a time — Today controls `expanded`. Rest is handled by the
+// full-screen FocusTimer (the ⏱ button opens it manually).
+export default function ExerciseLogCard({
+  index,
+  exercise,
+  target,
+  date,
+  sessions,
+  done,
+  expanded,
+  onToggle,
+  restSeconds,
+  onStartTimer,
+  onLogSet,
+  onDeleteSet,
+  onNotesChange,
+}) {
+  const [rows, setRows] = useState(() => buildInitialRows({ exercise, target, date, sessions }));
   const existing = findSession(sessions, date, exercise.id);
   const [noteOpen, setNoteOpen] = useState(Boolean(existing?.notes));
   const [note, setNote] = useState(existing?.notes || "");
   const [prRowIndex, setPrRowIndex] = useState(null);
-  // Finished exercises fold down to a one-line summary so the list stays
-  // scannable; tap the header to open one back up.
-  const [expanded, setExpanded] = useState(!done);
-  const wasDone = useRef(done);
-  useEffect(() => {
-    if (done && !wasDone.current) {
-      const t = setTimeout(() => setExpanded(false), 600);
-      wasDone.current = done;
-      return () => clearTimeout(t);
-    }
-    wasDone.current = done;
-  }, [done]);
 
   const loggedSets = existing?.sets || [];
-  const summary = loggedSets
-    .map((set) => (set.weight != null ? `${set.weight}kg${set.reps != null ? ` × ${set.reps}` : ""}` : `${set.reps} reps`))
-    .join("  ·  ");
-
   const best = getBestSet(sessions, exercise.id, date);
   const bestRepsOnly = getBestRepsOnlySet(sessions, exercise.id, date);
+  const dotCount = Math.max(target.sets, loggedSets.length);
 
-  function updateRow(index, patch) {
-    setRows((prev) => prev.map((r, i) => (i === index ? { ...r, ...patch } : r)));
+  function updateRow(i, patch) {
+    setRows((prev) => prev.map((r, idx) => (idx === i ? { ...r, ...patch } : r)));
   }
 
   // Weight and reps are each optional — log with just one filled in
   // (bodyweight exercises need only reps; some sets only need weight noted).
-  function handleSave(index) {
-    const row = rows[index];
+  function handleSave(i) {
+    const row = rows[i];
     const weight = row.weight === "" ? null : parseFloat(row.weight);
     const reps = row.reps === "" ? null : parseInt(row.reps, 10);
     if (weight == null && reps == null) return;
@@ -88,29 +101,25 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
     if (reps != null && (Number.isNaN(reps) || reps < 0)) return;
 
     const isPR = onLogSet(row.setNumber, weight, reps);
-    // Tesler's Law: carry this weight into the next untouched set so the
-    // user doesn't have to type the same number twice.
+    // Carry this weight into the next untouched set so the same number
+    // doesn't have to be typed twice.
     setRows((prev) =>
-      prev.map((r, i) => {
-        if (i === index) return { ...r, saved: { weight, reps } };
-        if (i === index + 1 && !r.saved && r.weight === "" && weight != null) return { ...r, weight: String(weight) };
+      prev.map((r, idx) => {
+        if (idx === i) return { ...r, saved: { weight, reps } };
+        if (idx === i + 1 && !r.saved && r.weight === "" && weight != null) return { ...r, weight: String(weight) };
         return r;
       })
     );
     if (isPR) {
-      setPrRowIndex(index);
-      setTimeout(() => setPrRowIndex((cur) => (cur === index ? null : cur)), 550);
+      setPrRowIndex(i);
+      setTimeout(() => setPrRowIndex((cur) => (cur === i ? null : cur)), 550);
     }
   }
 
-  // Only rows that are actually persisted (row.saved set) have anything to
-  // delete — an unfilled or not-yet-saved row is just local UI state that
-  // disappears on its own if left blank, no confirmation needed either way
-  // since it's a single set, not the whole log.
-  function handleDelete(index) {
-    const row = rows[index];
-    onDeleteSet(row.setNumber);
-    setRows((prev) => prev.filter((_, i) => i !== index).map((r, i) => ({ ...r, setNumber: i + 1 })));
+  // Only saved rows have anything to delete; renumber what's left.
+  function handleDelete(i) {
+    onDeleteSet(rows[i].setNumber);
+    setRows((prev) => prev.filter((_, idx) => idx !== i).map((r, idx) => ({ ...r, setNumber: idx + 1 })));
   }
 
   function handleAddSet() {
@@ -121,121 +130,125 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
     ]);
   }
 
-  function handleNoteBlur() {
-    onNotesChange(note);
-  }
+  const subtitle =
+    !expanded && done && loggedSets.length
+      ? loggedSets.map(formatSet).join(" · ")
+      : [exercise.target, exercise.kind, `${target.sets} × ${target.repRange}`].filter(Boolean).join(" · ");
 
   return (
-    <div className={`card exercise-card${done ? " is-done" : ""}${expanded ? "" : " is-collapsed"}`}>
-      <button
-        className="exercise-card-head"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-      >
-        <div>
-          <div className="exercise-name">
-            {index != null && <span className="exercise-index">{String(index).padStart(2, "0")}</span>}
-            {exercise.name}
-            {done && (
-              <span className="exercise-done-badge">
-                <IconCheck width={11} height={11} />
-              </span>
-            )}
-          </div>
-          <div className="exercise-target">
-            {target.sets} × {target.repRange}
-            {exercise.target && <span className="exercise-tag">{exercise.target}</span>}
-            {exercise.kind && <span className="exercise-tag outline">{exercise.kind}</span>}
-          </div>
-        </div>
-        <div className="exercise-head-side">
-          <span className={`exercise-chevron${expanded ? " open" : ""}`}>
+    <div className={`card ex-card${done ? " is-done" : ""}${expanded ? " is-open" : ""}`}>
+      <button className="ex-head" onClick={onToggle} aria-expanded={expanded}>
+        <span className={`ex-index${done ? " done" : ""}`}>
+          {done ? <IconCheck width={14} height={14} /> : index}
+        </span>
+        <span className="ex-title">
+          <span className="ex-name">{exercise.name}</span>
+          <span className="ex-sub">{subtitle}</span>
+        </span>
+        <span className="ex-side">
+          {!expanded && (
+            <span className="ex-dots" aria-label={`${loggedSets.length} of ${target.sets} sets`}>
+              {Array.from({ length: dotCount }, (_, i) => (
+                <span key={i} className={`ex-dot${i < loggedSets.length ? " on" : ""}`} />
+              ))}
+            </span>
+          )}
+          <span className={`ex-chevron${expanded ? " open" : ""}`}>
             <IconChevronRight />
           </span>
-        </div>
+        </span>
       </button>
 
-      {expanded && (best || bestRepsOnly) && (
-        <div className="exercise-best">
-          Best: {best ? `${best.weight}kg${best.reps > 0 ? ` × ${best.reps}` : ""}` : `${bestRepsOnly.reps} reps`}
-        </div>
-      )}
-
-      {!expanded && summary && <div className="exercise-summary">{summary}</div>}
-
       {expanded && (
-      <>
-
-      <div className="set-rows">
-        {rows.map((row, i) => {
-          const isSaved = matchesSaved(row);
-          return (
-            <div className={`set-row${row.saved ? " has-delete" : ""}`} key={row.setNumber}>
-              {row.setNumber <= WARMUP_SETS ? (
-                <div className="set-index warmup" title="Warm-up set">W</div>
-              ) : (
-                <div className="set-index">{row.setNumber}</div>
-              )}
-              <div className="set-field">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  placeholder="—"
-                  value={row.weight}
-                  onChange={(e) => updateRow(i, { weight: e.target.value.replace(/[^0-9.]/g, "") })}
-                />
-                <span className="unit">KG</span>
-              </div>
-              <div className="set-field">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="—"
-                  value={row.reps}
-                  onChange={(e) => updateRow(i, { reps: e.target.value.replace(/[^0-9]/g, "") })}
-                />
-                <span className="unit">REPS</span>
-              </div>
-              <button
-                className={`set-log-btn${isSaved ? " done" : ""}${prRowIndex === i ? " pr" : ""}`}
-                onClick={() => handleSave(i)}
-                disabled={row.weight === "" && row.reps === ""}
-                aria-label={`Log set ${row.setNumber}`}
-              >
-                <IconCheck />
-              </button>
-              {row.saved && (
-                <button className="set-delete-btn" onClick={() => handleDelete(i)} aria-label={`Delete set ${row.setNumber}`}>
-                  <IconClose width={14} height={14} />
-                </button>
-              )}
+        <div className="ex-body">
+          {(best || bestRepsOnly) && (
+            <div className="ex-best">
+              Best {best ? formatSet(best) : `${bestRepsOnly.reps} reps`}
             </div>
-          );
-        })}
-      </div>
+          )}
 
-      <div className="exercise-actions">
-        <button className="exercise-action" onClick={handleAddSet}>
-          <IconPlus width={14} height={14} /> Add set
-        </button>
-        {!noteOpen && (
-          <button className="exercise-action" onClick={() => setNoteOpen(true)}>
-            <IconPlus width={14} height={14} /> Note
-          </button>
-        )}
-      </div>
+          <div className="set-rows">
+            {rows.map((row, i) => {
+              const isSaved = matchesSaved(row);
+              return (
+                <div className="set-row" key={row.setNumber}>
+                  {row.setNumber <= WARMUP_SETS ? (
+                    <div className="set-index warmup" title="Warm-up set">
+                      W
+                    </div>
+                  ) : (
+                    <div className="set-index">{row.setNumber}</div>
+                  )}
+                  <div className="set-field">
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      placeholder="—"
+                      value={row.weight}
+                      onChange={(e) => updateRow(i, { weight: e.target.value.replace(/[^0-9.]/g, "") })}
+                    />
+                    <span className="unit">KG</span>
+                  </div>
+                  <div className="set-field">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="—"
+                      value={row.reps}
+                      onChange={(e) => updateRow(i, { reps: e.target.value.replace(/[^0-9]/g, "") })}
+                    />
+                    <span className="unit">REPS</span>
+                  </div>
+                  <button
+                    className={`set-log-btn${isSaved ? " done" : ""}${prRowIndex === i ? " pr" : ""}`}
+                    onClick={() => handleSave(i)}
+                    disabled={row.weight === "" && row.reps === ""}
+                    aria-label={`Log set ${row.setNumber}`}
+                  >
+                    <IconCheck />
+                  </button>
+                  {row.saved ? (
+                    <button
+                      className="set-delete-btn"
+                      onClick={() => handleDelete(i)}
+                      aria-label={`Delete set ${row.setNumber}`}
+                    >
+                      <IconClose width={14} height={14} />
+                    </button>
+                  ) : (
+                    <span aria-hidden="true" />
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
-      {noteOpen && (
-        <textarea
-          className="note-input"
-          placeholder="Notes (form cues, how it felt...)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          onBlur={handleNoteBlur}
-          autoFocus={!note}
-        />
-      )}
-      </>
+
+          <div className="ex-actions">
+            <button className="exercise-action" onClick={handleAddSet}>
+              <IconPlus width={14} height={14} /> Set
+            </button>
+            {!noteOpen && (
+              <button className="exercise-action" onClick={() => setNoteOpen(true)}>
+                <IconPlus width={14} height={14} /> Note
+              </button>
+            )}
+            <button className="exercise-action ex-rest-btn" onClick={onStartTimer} aria-label="Mula rest timer">
+              <IconTimer width={14} height={14} /> {formatClock(restSeconds)}
+            </button>
+          </div>
+
+          {noteOpen && (
+            <textarea
+              className="note-input"
+              placeholder="Notes (form cues, how it felt...)"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              onBlur={() => onNotesChange(note)}
+              autoFocus={!note}
+            />
+          )}
+        </div>
       )}
     </div>
   );

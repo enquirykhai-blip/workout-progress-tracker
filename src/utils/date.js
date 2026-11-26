@@ -1,4 +1,4 @@
-import { DAY_BY_JS_DAY } from "../data/exercises";
+import { DAY_BY_JS_DAY, planForDate } from "../data/exercises";
 
 const MALAY_MONTHS = [
   "Januari", "Februari", "Mac", "April", "Mei", "Jun",
@@ -16,8 +16,10 @@ export function todayISO() {
   return toISODate(new Date());
 }
 
-export function dayInfoForDate(date) {
-  return DAY_BY_JS_DAY[date.getDay()];
+// The plan for a date: weekday default, or whatever program the user swapped
+// in for that date (see planForDate in data/exercises).
+export function dayInfoForDate(date, overrides) {
+  return planForDate(date, toISODate(date), overrides);
 }
 
 export function dayKeyForISO(iso) {

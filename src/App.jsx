@@ -1,18 +1,18 @@
 import { useCallback, useState } from "react";
 import { useCloudState } from "./hooks/useCloudState";
 import { useAuth } from "./hooks/useAuth";
-import { useRestTimer } from "./hooks/useRestTimer";
+import { useRestTimer, resolveRestSeconds } from "./hooks/useRestTimer";
+import { useFocusTimer } from "./hooks/useFocusTimer";
 import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
-import { DAY_BY_KEY } from "./data/exercises";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
+import FocusTimer from "./components/FocusTimer";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
-import RestTimerBar from "./components/RestTimerBar";
 import Today from "./screens/Today";
 import Weekly from "./screens/Weekly";
 import Nutrition from "./screens/Nutrition";
@@ -40,6 +40,8 @@ export default function App() {
 function WorkoutApp({ uid, email, onSignOut }) {
   const [tab, setTab] = useState("today");
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
+  // Per-date program swaps: { "YYYY-MM-DD": programId | "rest" }.
+  const [dayOverrides, setDayOverrides] = useCloudState(STORAGE_KEYS.DAY_OVERRIDES, "dayOverrides", {}, uid);
   const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
   const [nutritionTargets, setNutritionTargets] = useCloudState(
     STORAGE_KEYS.NUTRITION_TARGETS,
@@ -50,6 +52,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const restTimer = useRestTimer();
+  const focusTimer = useFocusTimer();
   const fallbackName = (email || "").split("@")[0];
   const [displayName, setDisplayName] = useLocalStorageState(STORAGE_KEYS.DISPLAY_NAME, "");
 
@@ -62,7 +65,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   }, []);
 
   const handleLogSet = useCallback(
-    (exercise, day, setNumber, weight, reps) => {
+    (exercise, day, setNumber, weight, reps, restSeconds = 120, restMeta = {}) => {
       const iso = todayISO();
       const wasPR = isPR(sessions, exercise.id, iso, weight, reps);
       setSessions((prev) => upsertSet(prev, { date: iso, day, exerciseId: exercise.id, setNumber, weight, reps }));
@@ -70,12 +73,14 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
-      const duration =
-        restTimer.defaultDuration === "auto" ? DAY_BY_KEY[day]?.restSeconds ?? 120 : restTimer.defaultDuration;
-      restTimer.start(duration);
+      // Logging a set opens the full-screen rest timer.
+      focusTimer.start(resolveRestSeconds(restTimer.defaultDuration, restSeconds), {
+        title: exercise.name,
+        ...restMeta,
+      });
       return wasPR;
     },
-    [sessions, setSessions, showToast, restTimer]
+    [sessions, setSessions, showToast, restTimer.defaultDuration, focusTimer]
   );
 
   const handleDeleteSet = useCallback(
@@ -155,9 +160,20 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onNotesChange={handleNotesChange}
           onGoToNutrition={() => setTab("nutrition")}
           displayName={displayName.trim() || fallbackName}
+          dayOverrides={dayOverrides}
+          restPreference={restTimer.defaultDuration}
+          onStartRest={focusTimer.start}
+          onPickProgram={(date, programId) =>
+            setDayOverrides((prev) => {
+              const next = { ...prev };
+              if (programId === undefined) delete next[date];
+              else next[date] = programId;
+              return next;
+            })
+          }
         />
       )}
-      {tab === "week" && <Weekly sessions={sessions} />}
+      {tab === "week" && <Weekly sessions={sessions} dayOverrides={dayOverrides} />}
       {tab === "nutrition" && (
         <Nutrition
           entries={nutrition}
@@ -168,13 +184,16 @@ function WorkoutApp({ uid, email, onSignOut }) {
         />
       )}
 
-      <RestTimerBar
-        active={restTimer.active}
-        remaining={restTimer.remaining}
-        addSeconds={restTimer.addSeconds}
-        skip={restTimer.skip}
-      />
       <BottomNav active={tab} onChange={setTab} />
+      <FocusTimer
+        timer={focusTimer.timer}
+        remaining={focusTimer.remaining}
+        minimized={focusTimer.minimized}
+        onMinimize={() => focusTimer.setMinimized(true)}
+        onExpand={() => focusTimer.setMinimized(false)}
+        onAdjust={focusTimer.adjust}
+        onSkip={focusTimer.skip}
+      />
     </div>
   );
 }

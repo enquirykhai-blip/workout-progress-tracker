@@ -1,11 +1,13 @@
-import { PROGRAM, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL, DAYS } from "../data/exercises";
+import { PROGRAM, PROGRAMS, EXERCISE_MAP, GUIDELINE, VOLUME_LABEL, DAYS } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
 import { findSession, getBestSet } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
-import { IconArrowRight, IconChevronRight } from "../components/icons";
+import ProgramPicker from "../components/ProgramPicker";
+import { IconArrowRight, IconChevronRight, IconSwap } from "../components/icons";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
+import { resolveRestSeconds } from "../hooks/useRestTimer";
 
 function ProgressRing({ done, total, size = 96, stroke = 5 }) {
   const r = (size - stroke) / 2;
@@ -39,14 +41,26 @@ function ProgressRing({ done, total, size = 96, stroke = 5 }) {
   );
 }
 
-export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, onGoToNutrition, displayName }) {
+export default function Today({
+  sessions,
+  onLogSet,
+  onDeleteSet,
+  onNotesChange,
+  onGoToNutrition,
+  displayName,
+  dayOverrides = {},
+  onPickProgram,
+  restPreference = "auto",
+  onStartRest,
+}) {
   const date = todayISO();
-  const dayInfo = dayInfoForDate(new Date());
+  const dayInfo = dayInfoForDate(new Date(), dayOverrides);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useLocalStorageState(STORAGE_KEYS.GUIDE_OPEN, false);
 
   const items =
     dayInfo.type === "workout"
-      ? PROGRAM[dayInfo.key].map((entry) => ({
+      ? PROGRAM[dayInfo.programId].map((entry) => ({
           exercise: EXERCISE_MAP[entry.exerciseId],
           target: entry,
         }))
@@ -59,11 +73,36 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
   const doneCount = items.filter(({ exercise, target }) => isExerciseDone(exercise, target)).length;
   const nextItem = items.find(({ exercise, target }) => !isExerciseDone(exercise, target));
   const allDone = items.length > 0 && !nextItem;
+  const nextId = nextItem?.exercise.id ?? null;
+  const restSeconds = resolveRestSeconds(restPreference, dayInfo.restSeconds);
+
+  // Accordion: only one exercise is open at a time — the one being worked on.
+  // When it's finished (or the program is swapped), the next unfinished one
+  // opens on its own after a short beat so the ✓ registers first.
+  const [openId, setOpenId] = useState(nextId);
+  const prevNextId = useRef(nextId);
+  useEffect(() => {
+    if (prevNextId.current === nextId) return;
+    prevNextId.current = nextId;
+    const t = setTimeout(() => setOpenId(nextId), 500);
+    return () => clearTimeout(t);
+  }, [nextId]);
+
+  // What comes after this set — shown as "Next up" on the rest timer.
+  function nextUpAfter(i, setNumber) {
+    const { exercise, target } = items[i];
+    if (setNumber < target.sets) return `Set ${setNumber + 1} of ${target.sets} · ${exercise.name}`;
+    const following = items.slice(i + 1).find(({ exercise: e, target: t }) => !isExerciseDone(e, t));
+    return following ? following.exercise.name : "Last set — workout complete!";
+  }
 
   function scrollToNext() {
     const target = nextItem || items[0];
     if (!target) return;
-    document.getElementById(`ex-${target.exercise.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    setOpenId(target.exercise.id);
+    requestAnimationFrame(() =>
+      document.getElementById(`ex-${target.exercise.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" })
+    );
   }
 
   const ctaLabel = doneCount > 0 ? "Continue" : "Start now";
@@ -95,11 +134,17 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
     wasAllDone.current = allDone;
   }, [allDone]);
 
-  // Next training day after today (for the rest-day screen).
+  // Next scheduled training day after today (for the rest-day screen).
   const todayIdx = DAYS.findIndex((d) => d.key === dayInfo.key);
-  const nextWorkout = [1, 2, 3, 4, 5, 6, 7]
-    .map((n) => DAYS[(todayIdx + n) % 7])
-    .find((d) => d.type === "workout");
+  const nextDay = [1, 2, 3, 4, 5, 6, 7].map((n) => DAYS[(todayIdx + n) % 7]).find((d) => d.programId);
+  const nextWorkout = nextDay && { label: nextDay.label, ...PROGRAMS[nextDay.programId] };
+
+  const eyebrow = (
+    <span className="hero-dark-eyebrow">
+      {dayInfo.label} · {formatDisplayDate(date)}
+      {dayInfo.overridden && " · Ditukar"}
+    </span>
+  );
 
   return (
     <div className="screen">
@@ -116,17 +161,20 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           <div className="hero-dark">
             <div className="hero-dark-top">
               <div className="hero-dark-text">
-                <span className="hero-dark-eyebrow">
-                  {dayInfo.label} · {formatDisplayDate(date)}
-                </span>
+                {eyebrow}
                 <span className="hero-dark-title">Rest Day</span>
                 <span className="hero-dark-sub">Rehat, minum air, makan cukup protein.</span>
               </div>
               <span className="hero-dark-emoji">🌙</span>
             </div>
-            <button className="hero-dark-cta" onClick={onGoToNutrition}>
-              Log today's meals <IconArrowRight width={16} height={16} />
-            </button>
+            <div className="hero-dark-actions">
+              <button className="hero-dark-cta" onClick={onGoToNutrition}>
+                Log today's meals <IconArrowRight width={16} height={16} />
+              </button>
+              <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
+                <IconSwap width={16} height={16} /> Nak workout?
+              </button>
+            </div>
           </div>
 
           {nextWorkout && (
@@ -137,7 +185,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
                   <div className="next-card-day">{nextWorkout.label}</div>
                   <div className="next-card-focus">{nextWorkout.focus}</div>
                   <div className="next-card-meta">
-                    {PROGRAM[nextWorkout.key].length} exercises · {VOLUME_LABEL} · Rest {nextWorkout.rest}
+                    {nextWorkout.exercises.length} exercises · {VOLUME_LABEL} · Rest {nextWorkout.rest}
                   </div>
                 </div>
                 <ul className="tile-list next-card-list">
@@ -155,9 +203,7 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             <div className={`hero-dark hero-complete${celebrate ? " celebrate" : ""}`}>
               <div className="hero-dark-top">
                 <div className="hero-dark-text">
-                  <span className="hero-dark-eyebrow">
-                    {dayInfo.label} · {formatDisplayDate(date)}
-                  </span>
+                  {eyebrow}
                   <span className="hero-dark-title">Workout complete</span>
                   <span className="hero-dark-sub">{dayInfo.focus} Day siap. Good work!</span>
                 </div>
@@ -185,17 +231,20 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             <div className="hero-dark">
               <div className="hero-dark-top">
                 <div className="hero-dark-text">
-                  <span className="hero-dark-eyebrow">
-                    {dayInfo.label} · {formatDisplayDate(date)}
-                  </span>
+                  {eyebrow}
                   <span className="hero-dark-title">{dayInfo.focus} Day</span>
                   <span className="hero-dark-sub">Up next: {nextItem.exercise.name}</span>
                 </div>
                 <ProgressRing done={doneCount} total={items.length} />
               </div>
-              <button className="hero-dark-cta" onClick={scrollToNext}>
-                {ctaLabel} <IconArrowRight width={16} height={16} />
-              </button>
+              <div className="hero-dark-actions">
+                <button className="hero-dark-cta" onClick={scrollToNext}>
+                  {ctaLabel} <IconArrowRight width={16} height={16} />
+                </button>
+                <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
+                  <IconSwap width={16} height={16} /> Tukar
+                </button>
+              </div>
             </div>
           )}
 
@@ -258,24 +307,46 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
             </div>
           </div>
 
-          {items.map(({ exercise, target }, i) => (
-            <div id={`ex-${exercise.id}`} className="exercise-anchor" key={`${exercise.id}-${date}`}>
-              <ExerciseLogCard
-                index={i + 1}
-                exercise={exercise}
-                target={target}
-                date={date}
-                day={dayInfo.key}
-                sessions={sessions}
-                done={isExerciseDone(exercise, target)}
-                onLogSet={(setNumber, weight, reps) => onLogSet(exercise, dayInfo.key, setNumber, weight, reps)}
-                onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
-                onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
-              />
-            </div>
-          ))}
-
+          <div className="ex-list">
+            {items.map(({ exercise, target }, i) => (
+              <div id={`ex-${exercise.id}`} className="exercise-anchor" key={`${exercise.id}-${date}`}>
+                <ExerciseLogCard
+                  index={i + 1}
+                  exercise={exercise}
+                  target={target}
+                  date={date}
+                  sessions={sessions}
+                  done={isExerciseDone(exercise, target)}
+                  expanded={openId === exercise.id}
+                  onToggle={() => setOpenId((cur) => (cur === exercise.id ? null : exercise.id))}
+                  restSeconds={restSeconds}
+                  onStartTimer={() => {
+                    const logged = findSession(sessions, date, exercise.id)?.sets.length || 0;
+                    onStartRest?.(restSeconds, {
+                      title: exercise.name,
+                      next: nextUpAfter(i, Math.max(logged, 1)),
+                    });
+                  }}
+                  onLogSet={(setNumber, weight, reps) =>
+                    onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds, {
+                      next: nextUpAfter(i, setNumber),
+                    })
+                  }
+                  onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
+                  onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
+                />
+              </div>
+            ))}
+          </div>
         </>
+      )}
+
+      {pickerOpen && (
+        <ProgramPicker
+          dayInfo={dayInfo}
+          onPick={(programId) => onPickProgram?.(date, programId)}
+          onClose={() => setPickerOpen(false)}
+        />
       )}
     </div>
   );
