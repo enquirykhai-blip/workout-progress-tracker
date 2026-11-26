@@ -1,45 +1,96 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 
 // Shared voice / sound / screen helpers for the Rep Coach and Focus Mode.
 // All speech is English.
 
-// ---- Speech: English, preferring a male voice. ----
-// Browsers don't expose a voice's gender, so we match the names of the
-// common male voices on iOS/macOS, Android (Google) and Windows.
-const MALE_VOICE =
-  /\b(daniel|aaron|arthur|alex|fred|tom|rishi|oliver|gordon|reed|rocko|eddy|ralph|albert|bruce|david|mark|guy|ryan|christopher|eric|roger|andrew|brian|george|james|william|liam|thomas|male)\b|en-(us|gb|au|in)-x-(iom|iol|tpd|rjs|gbd|aud|ene)/i;
+// ---- Speech: English, a clear male voice by default. ----
+// Browsers don't expose a voice's gender or quality, so voices are ranked by
+// name: high-quality ("Enhanced", "Premium", "Neural", "Natural", online
+// Google voices) first, then known male voices, then en-GB/en-US. Apple's
+// novelty voices (Fred, Eddy, Reed, Rocko, Zarvox, …) sound robotic and are
+// never picked automatically. The user can also choose a voice in Settings.
+
+const VOICE_PREF_KEY = "wpt.coachVoice.v1";
+
+const NOVELTY =
+  /\b(fred|albert|bad news|bahh|bells|boing|bubbles|cellos|good news|jester|organ|superstar|trinoids|whisper|wobble|zarvox|junior|ralph|bruce|eddy|reed|rocko|grandpa|grandma|sandy|shelley|flo|kathy|vicki|victoria|princess|deranged|hysterical|pipe organ)\b/i;
+const QUALITY = /enhanced|premium|neural|natural|online|wavenet|studio|siri/i;
+const MALE =
+  /\b(daniel|aaron|arthur|oliver|gordon|rishi|evan|nathan|tom|alex|david|mark|guy|ryan|christopher|eric|roger|andrew|brian|george|james|william|liam|thomas|male)\b|en-(us|gb|au|in)-x-(iom|iol|tpd|rjs|gbd|aud|ene)/i;
+
+function englishVoices() {
+  return (window.speechSynthesis?.getVoices?.() || []).filter((v) => /^en/i.test(v.lang));
+}
+
+function scoreVoice(v) {
+  const id = `${v.name} ${v.voiceURI || ""}`;
+  if (NOVELTY.test(id)) return -100;
+  let score = 0;
+  if (QUALITY.test(id)) score += 40;
+  if (MALE.test(id)) score += 25;
+  if (/^en-(gb|us)/i.test(v.lang)) score += 6;
+  if (/^en-(au|ie|ca)/i.test(v.lang)) score += 3;
+  if (v.localService) score += 2;
+  return score;
+}
+
+// English voices, best first — used by the Settings voice picker.
+export function rankedVoices() {
+  return englishVoices()
+    .map((v) => ({ voice: v, score: scoreVoice(v) }))
+    .filter((x) => x.score > -100)
+    .sort((a, b) => b.score - a.score)
+    .map((x) => x.voice);
+}
+
+export function getVoicePreference() {
+  try {
+    return JSON.parse(localStorage.getItem(VOICE_PREF_KEY)) || "";
+  } catch {
+    return "";
+  }
+}
+
+export function setVoicePreference(name) {
+  try {
+    localStorage.setItem(VOICE_PREF_KEY, JSON.stringify(name || ""));
+  } catch {
+    // storage unavailable — falls back to auto
+  }
+}
 
 function pickVoice() {
-  const voices = (window.speechSynthesis?.getVoices?.() || []).filter((v) => /^en/i.test(v.lang));
-  const male = voices.filter((v) => MALE_VOICE.test(`${v.name} ${v.voiceURI || ""}`));
-  const byLocal = (list) => list.find((v) => v.localService) || list[0];
-  const preferred = (list) =>
-    byLocal(list.filter((v) => /^en-(gb|us)/i.test(v.lang))) || byLocal(list);
-  const voice = preferred(male);
-  if (voice) return { voice, pitch: 0.95 };
-  // No male voice installed: use any English voice, pitched down.
-  return { voice: preferred(voices) || null, pitch: 0.72 };
+  const chosen = getVoicePreference();
+  if (chosen) {
+    const match = englishVoices().find((v) => v.name === chosen);
+    if (match) return match;
+  }
+  return rankedVoices()[0] || null;
+}
+
+// Speak once with the given (or auto) voice — used by the "Test" button.
+export function speakSample(text, voiceName) {
+  if (!("speechSynthesis" in window)) return;
+  const v = (voiceName && englishVoices().find((x) => x.name === voiceName)) || pickVoice();
+  const u = new SpeechSynthesisUtterance(text);
+  if (v) u.voice = v;
+  u.lang = v?.lang || "en-US";
+  window.speechSynthesis.cancel();
+  window.speechSynthesis.speak(u);
 }
 
 export function useSpeech(enabled) {
-  const voiceRef = useRef(null);
-  useEffect(() => {
-    if (!("speechSynthesis" in window)) return;
-    const load = () => (voiceRef.current = pickVoice());
-    load();
-    window.speechSynthesis.addEventListener?.("voiceschanged", load);
-    return () => window.speechSynthesis.removeEventListener?.("voiceschanged", load);
-  }, []);
-
   const say = useCallback(
     (text, { interrupt = true } = {}) => {
       if (!enabled || !("speechSynthesis" in window)) return;
-      const v = voiceRef.current || pickVoice();
+      // Resolved on every line, so a voice picked in Settings applies at once.
+      const v = pickVoice();
       const u = new SpeechSynthesisUtterance(text);
-      if (v.voice) u.voice = v.voice;
-      u.lang = v.voice?.lang || "en-US";
-      u.pitch = v.pitch;
-      u.rate = 1.02;
+      if (v) u.voice = v;
+      u.lang = v?.lang || "en-US";
+      // Natural pitch and pace — bending either makes voices sound robotic.
+      u.pitch = 1;
+      u.rate = 1;
       if (interrupt) window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     },
