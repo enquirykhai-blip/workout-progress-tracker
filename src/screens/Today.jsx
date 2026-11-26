@@ -3,6 +3,7 @@ import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
 import { findSession, getBestSet } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
 import ProgramPicker from "../components/ProgramPicker";
+import FocusSession from "../components/FocusSession";
 import { IconArrowRight, IconChevronRight, IconSwap } from "../components/icons";
 import { useEffect, useRef, useState } from "react";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
@@ -62,6 +63,9 @@ export default function Today({
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date(), dayOverrides);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [focusOpen, setFocusOpen] = useState(false);
+  // Bumped when Focus Mode closes so the exercise cards re-read what it logged.
+  const [cardsVersion, setCardsVersion] = useState(0);
   const [guideOpen, setGuideOpen] = useLocalStorageState(STORAGE_KEYS.GUIDE_OPEN, false);
   const [demoOpen, setDemoOpen] = useLocalStorageState(STORAGE_KEYS.DEMO_OPEN, true);
 
@@ -112,7 +116,7 @@ export default function Today({
     );
   }
 
-  const ctaLabel = doneCount > 0 ? "Continue" : "Start now";
+  const ctaLabel = "Log manual";
 
   // Peak-End Rule: finish the session on a high note — a summary of what
   // was lifted today, with a one-off celebration when the last exercise lands.
@@ -245,8 +249,11 @@ export default function Today({
                 <ProgressRing done={doneCount} total={items.length} />
               </div>
               <div className="hero-dark-actions">
-                <button className="hero-dark-cta" onClick={scrollToNext}>
-                  {ctaLabel} <IconArrowRight width={16} height={16} />
+                <button className="hero-dark-cta" onClick={() => setFocusOpen(true)}>
+                  ▶ Mod Fokus
+                </button>
+                <button className="hero-dark-swap" onClick={scrollToNext}>
+                  {ctaLabel}
                 </button>
                 <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
                   <IconSwap width={16} height={16} /> Tukar
@@ -316,7 +323,7 @@ export default function Today({
 
           <div className="ex-list">
             {items.map(({ exercise, target }, i) => (
-              <div id={`ex-${exercise.id}`} className="exercise-anchor" key={`${exercise.id}-${date}`}>
+              <div id={`ex-${exercise.id}`} className="exercise-anchor" key={`${exercise.id}-${date}-${cardsVersion}`}>
                 <ExerciseLogCard
                   index={i + 1}
                   exercise={exercise}
@@ -348,6 +355,23 @@ export default function Today({
             ))}
           </div>
         </>
+      )}
+
+      {focusOpen && dayInfo.type === "workout" && (
+        <FocusSession
+          items={items}
+          sessions={sessions}
+          date={date}
+          restSeconds={restSeconds}
+          focusLabel={dayInfo.focus}
+          onLogSet={(exercise, setNumber, weight, reps) =>
+            onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds, false)
+          }
+          onClose={() => {
+            setFocusOpen(false);
+            setCardsVersion((v) => v + 1);
+          }}
+        />
       )}
 
       {pickerOpen && (

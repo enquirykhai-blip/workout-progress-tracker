@@ -4,6 +4,7 @@ import { IconClose } from "./icons";
 import { haptic } from "../utils/motion";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
+import { malayNumber, useSpeech, useTicks, useWakeLock } from "../hooks/useVoice";
 
 // Hands-free rep counter. Paces every rep on the plan's tempo (lift → hold &
 // squeeze → lower), ticks at each phase change, and says the rep number out
@@ -25,116 +26,26 @@ const PHASE_CUE_EN = ["lift", "hold, squeeze", "lower"];
 const PHASE_TONE = [880, 660, 440];
 const COUNTDOWN_S = 3;
 
-const MS_ONES = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "lapan", "sembilan"];
-function malayNumber(n) {
-  if (n < 10) return MS_ONES[n];
-  if (n === 10) return "sepuluh";
-  if (n === 11) return "sebelas";
-  if (n < 20) return `${MS_ONES[n - 10]} belas`;
-  const tens = Math.floor(n / 10);
-  const rest = n % 10;
-  return `${MS_ONES[tens]} puluh${rest ? ` ${MS_ONES[rest]}` : ""}`;
-}
-
-// ---- Speech: Malay when the phone has a Malay voice, English otherwise. ----
-function pickVoice() {
-  const voices = window.speechSynthesis?.getVoices?.() || [];
-  const ms = voices.find((v) => /^ms|^id/i.test(v.lang));
-  if (ms) return { voice: ms, malay: true };
-  const en = voices.find((v) => /^en/i.test(v.lang));
-  return { voice: en || null, malay: false };
-}
-
-function useSpeech(enabled) {
-  const voiceRef = useRef(null);
-  useEffect(() => {
-    if (!("speechSynthesis" in window)) return;
-    const load = () => (voiceRef.current = pickVoice());
-    load();
-    window.speechSynthesis.addEventListener?.("voiceschanged", load);
-    return () => window.speechSynthesis.removeEventListener?.("voiceschanged", load);
-  }, []);
-
-  const say = useCallback(
-    (ms, en, { interrupt = true } = {}) => {
-      if (!enabled || !("speechSynthesis" in window)) return;
-      const v = voiceRef.current || pickVoice();
-      const u = new SpeechSynthesisUtterance(v.malay ? ms : en);
-      if (v.voice) {
-        u.voice = v.voice;
-        u.lang = v.voice.lang;
-      }
-      u.rate = 1.05;
-      if (interrupt) window.speechSynthesis.cancel();
-      window.speechSynthesis.speak(u);
-    },
-    [enabled]
-  );
-
-  const stop = useCallback(() => window.speechSynthesis?.cancel(), []);
-  return { say, stop };
-}
-
-// ---- Ticks via Web Audio (works offline, no files). ----
-function useTicks(enabled) {
-  const ctxRef = useRef(null);
-  const unlock = useCallback(() => {
-    if (!ctxRef.current) {
-      const Ctx = window.AudioContext || window.webkitAudioContext;
-      if (Ctx) ctxRef.current = new Ctx();
-    }
-    ctxRef.current?.resume?.();
-  }, []);
-  const tick = useCallback(
-    (freq, dur = 0.08, vol = 0.18) => {
-      const ctx = ctxRef.current;
-      if (!enabled || !ctx) return;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = "sine";
-      osc.frequency.value = freq;
-      const t = ctx.currentTime;
-      gain.gain.setValueAtTime(0.0001, t);
-      gain.gain.exponentialRampToValueAtTime(vol, t + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(t);
-      osc.stop(t + dur + 0.02);
-    },
-    [enabled]
-  );
-  useEffect(() => () => ctxRef.current?.close?.(), []);
-  return { unlock, tick };
-}
-
-// ---- Keep the screen awake while counting. ----
-function useWakeLock(active) {
-  useEffect(() => {
-    if (!active || !("wakeLock" in navigator)) return;
-    let lock = null;
-    let cancelled = false;
-    const request = async () => {
-      try {
-        lock = await navigator.wakeLock.request("screen");
-      } catch {
-        // denied (battery saver etc.) — counting still works
-      }
-    };
-    const onVisible = () => !cancelled && document.visibilityState === "visible" && request();
-    request();
-    document.addEventListener("visibilitychange", onVisible);
-    return () => {
-      cancelled = true;
-      document.removeEventListener("visibilitychange", onVisible);
-      lock?.release?.().catch(() => {});
-    };
-  }, [active]);
-}
-
 const RING = 248;
 const STROKE = 10;
 
-export default function RepCoach({ exerciseName, setNumber, totalSets, targetReps = 15, weight, onFinish, onClose }) {
+// Props for Focus Mode: `embedded` renders inline (the session owns the
+// overlay), `autoStart` skips the ready screen, `autoSaveMs` saves the count
+// on its own shortly after "Siap!" unless the user adjusts it, and
+// `eyebrow` replaces the "Set n of m" line.
+export default function RepCoach({
+  exerciseName,
+  setNumber,
+  totalSets,
+  targetReps = 15,
+  weight,
+  onFinish,
+  onClose,
+  embedded = false,
+  autoStart = false,
+  autoSaveMs = 0,
+  eyebrow,
+}) {
   const [tempoKey, setTempoKey] = useLocalStorageState(STORAGE_KEYS.REP_TEMPO, "plan");
   const [voiceOn, setVoiceOn] = useLocalStorageState(STORAGE_KEYS.REP_VOICE, true);
   // Speak "angkat / tahan, squeeze / turun" at every phase, not just numbers.
@@ -152,6 +63,7 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
 
   const { say, stop: stopSpeech } = useSpeech(voiceOn);
   const { unlock, tick } = useTicks(true);
+  const [autoSaveLeft, setAutoSaveLeft] = useState(null);
   useWakeLock(status === "countdown" || status === "running" || status === "paused");
 
   // Mutable engine state so the animation loop doesn't re-subscribe.
@@ -235,6 +147,36 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
 
   useEffect(() => () => stopSpeech(), [stopSpeech]);
 
+  // Focus Mode: begin counting straight away.
+  const started = useRef(false);
+  useEffect(() => {
+    if (autoStart && !started.current) {
+      started.current = true;
+      start();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoStart]);
+
+  // Focus Mode: save the count a moment after "Siap!" unless the user
+  // touches −1/+1/Teruskan first.
+  const [autoSaveOff, setAutoSaveOff] = useState(false);
+  useEffect(() => {
+    if (status !== "done" || !autoSaveMs || autoSaveOff) {
+      setAutoSaveLeft(null);
+      return;
+    }
+    const end = Date.now() + autoSaveMs;
+    setAutoSaveLeft(Math.ceil(autoSaveMs / 1000));
+    const iv = setInterval(() => {
+      const left = Math.ceil((end - Date.now()) / 1000);
+      if (left <= 0) {
+        clearInterval(iv);
+        onFinish(eng.current.reps);
+      } else setAutoSaveLeft(left);
+    }, 200);
+    return () => clearInterval(iv);
+  }, [status, autoSaveMs, autoSaveOff, onFinish]);
+
   function start() {
     unlock(); // audio + speech must be started from a tap on iOS
     say("Sedia", "Ready");
@@ -264,6 +206,7 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
 
   function keepGoing() {
     unlock();
+    setAutoSaveOff(true);
     setGoal((g) => Math.max(g, eng.current.reps) + 5);
     eng.current.phase = 0;
     eng.current.phaseStart = performance.now();
@@ -273,6 +216,7 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
   }
 
   function adjust(delta) {
+    setAutoSaveOff(true);
     const n = Math.max(0, eng.current.reps + delta);
     eng.current.reps = n;
     setReps(n);
@@ -283,16 +227,20 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
   const setPct = goal ? Math.min(reps / goal, 1) : 0;
   const counting = status === "running" || status === "paused";
 
-  return createPortal(
-    <div className={`coach coach-${status}`} role="dialog" aria-label="Rep coach">
+  const view = (
+    <div className={`coach coach-${status}${embedded ? " coach-embedded" : ""}`} role="dialog" aria-label="Rep coach">
       <div className="coach-top">
         <button className="focus-icon-btn" onClick={onClose} aria-label="Tutup">
           <IconClose width={18} height={18} />
         </button>
         <div className="coach-head">
           <div className="coach-eyebrow">
-            Set {setNumber}
-            {totalSets ? ` of ${totalSets}` : ""} · Target {targetReps}
+            {eyebrow || (
+              <>
+                Set {setNumber}
+                {totalSets ? ` of ${totalSets}` : ""} · Target {targetReps}
+              </>
+            )}
           </div>
           <div className="coach-title">{exerciseName}</div>
         </div>
@@ -430,11 +378,13 @@ export default function RepCoach({ exerciseName, setNumber, totalSets, targetRep
             </button>
             <button className="focus-skip" onClick={() => onFinish(reps)} disabled={reps === 0}>
               {weight ? "Simpan set" : "Isi reps"}
+              {autoSaveLeft != null && !autoSaveOff ? ` · ${autoSaveLeft}` : ""}
             </button>
           </>
         )}
       </div>
-    </div>,
-    document.body
+    </div>
   );
+
+  return embedded ? view : createPortal(view, document.body);
 }

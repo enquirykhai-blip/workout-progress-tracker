@@ -87,11 +87,14 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
-      // Logging a set opens the full-screen rest timer.
-      focusTimer.start(resolveRestSeconds(restTimer.defaultDuration, restSeconds), {
-        title: exercise.name,
-        ...restMeta,
-      });
+      // Logging a set opens the full-screen rest timer — except in Focus
+      // Mode (restMeta === false), which runs its own rest between sets.
+      if (restMeta !== false) {
+        focusTimer.start(resolveRestSeconds(restTimer.defaultDuration, restSeconds), {
+          title: exercise.name,
+          ...restMeta,
+        });
+      }
       return wasPR;
     },
     [sessions, setSessions, showToast, restTimer.defaultDuration, focusTimer]
