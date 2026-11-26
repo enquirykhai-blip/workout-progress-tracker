@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { useCloudState } from "./hooks/useCloudState";
 import { useAuth } from "./hooks/useAuth";
 import { useRestTimer, resolveRestSeconds } from "./hooks/useRestTimer";
-import { useExerciseTimers } from "./hooks/useExerciseTimers";
+import { useFocusTimer } from "./hooks/useFocusTimer";
 import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
@@ -10,6 +10,7 @@ import { todayISO } from "./utils/date";
 import { useLocalStorageState } from "./hooks/useLocalStorageState";
 import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
+import FocusTimer from "./components/FocusTimer";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
 import Today from "./screens/Today";
@@ -51,7 +52,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const restTimer = useRestTimer();
-  const exerciseTimers = useExerciseTimers();
+  const focusTimer = useFocusTimer();
   const fallbackName = (email || "").split("@")[0];
   const [displayName, setDisplayName] = useLocalStorageState(STORAGE_KEYS.DISPLAY_NAME, "");
 
@@ -64,7 +65,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
   }, []);
 
   const handleLogSet = useCallback(
-    (exercise, day, setNumber, weight, reps, restSeconds = 120) => {
+    (exercise, day, setNumber, weight, reps, restSeconds = 120, restMeta = {}) => {
       const iso = todayISO();
       const wasPR = isPR(sessions, exercise.id, iso, weight, reps);
       setSessions((prev) => upsertSet(prev, { date: iso, day, exerciseId: exercise.id, setNumber, weight, reps }));
@@ -72,11 +73,14 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
-      // Each exercise runs its own rest countdown, started by logging a set.
-      exerciseTimers.start(exercise.id, resolveRestSeconds(restTimer.defaultDuration, restSeconds));
+      // Logging a set opens the full-screen rest timer.
+      focusTimer.start(resolveRestSeconds(restTimer.defaultDuration, restSeconds), {
+        title: exercise.name,
+        ...restMeta,
+      });
       return wasPR;
     },
-    [sessions, setSessions, showToast, restTimer.defaultDuration, exerciseTimers]
+    [sessions, setSessions, showToast, restTimer.defaultDuration, focusTimer]
   );
 
   const handleDeleteSet = useCallback(
@@ -158,7 +162,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
           displayName={displayName.trim() || fallbackName}
           dayOverrides={dayOverrides}
           restPreference={restTimer.defaultDuration}
-          timers={exerciseTimers}
+          onStartRest={focusTimer.start}
           onPickProgram={(date, programId) =>
             setDayOverrides((prev) => {
               const next = { ...prev };
@@ -181,6 +185,15 @@ function WorkoutApp({ uid, email, onSignOut }) {
       )}
 
       <BottomNav active={tab} onChange={setTab} />
+      <FocusTimer
+        timer={focusTimer.timer}
+        remaining={focusTimer.remaining}
+        minimized={focusTimer.minimized}
+        onMinimize={() => focusTimer.setMinimized(true)}
+        onExpand={() => focusTimer.setMinimized(false)}
+        onAdjust={focusTimer.adjust}
+        onSkip={focusTimer.skip}
+      />
     </div>
   );
 }

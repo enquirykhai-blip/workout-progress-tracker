@@ -57,9 +57,9 @@ function formatSet(set) {
 }
 
 // One exercise in today's list. Collapsed it's a single compact row (number,
-// name, muscle, set dots or a live rest countdown); expanded it shows the set
-// inputs and the exercise's own rest timer. Only one card is open at a time —
-// Today controls `expanded`.
+// name, muscle, set dots); expanded it shows the set inputs. Only one card is
+// open at a time — Today controls `expanded`. Rest is handled by the
+// full-screen FocusTimer (the ⏱ button opens it manually).
 export default function ExerciseLogCard({
   index,
   exercise,
@@ -69,11 +69,8 @@ export default function ExerciseLogCard({
   done,
   expanded,
   onToggle,
-  timer,
   restSeconds,
   onStartTimer,
-  onAdjustTimer,
-  onStopTimer,
   onLogSet,
   onDeleteSet,
   onNotesChange,
@@ -138,14 +135,8 @@ export default function ExerciseLogCard({
       ? loggedSets.map(formatSet).join(" · ")
       : [exercise.target, exercise.kind, `${target.sets} × ${target.repRange}`].filter(Boolean).join(" · ");
 
-  const progress = timer.running && timer.total ? timer.remaining / timer.total : 0;
-
   return (
-    <div
-      className={`card ex-card${done ? " is-done" : ""}${expanded ? " is-open" : ""}${
-        timer.running ? " is-resting" : ""
-      }`}
-    >
+    <div className={`card ex-card${done ? " is-done" : ""}${expanded ? " is-open" : ""}`}>
       <button className="ex-head" onClick={onToggle} aria-expanded={expanded}>
         <span className={`ex-index${done ? " done" : ""}`}>
           {done ? <IconCheck width={14} height={14} /> : index}
@@ -155,19 +146,12 @@ export default function ExerciseLogCard({
           <span className="ex-sub">{subtitle}</span>
         </span>
         <span className="ex-side">
-          {timer.running && !expanded ? (
-            <span className="ex-timer-chip">
-              <IconTimer width={13} height={13} />
-              {formatClock(timer.remaining)}
+          {!expanded && (
+            <span className="ex-dots" aria-label={`${loggedSets.length} of ${target.sets} sets`}>
+              {Array.from({ length: dotCount }, (_, i) => (
+                <span key={i} className={`ex-dot${i < loggedSets.length ? " on" : ""}`} />
+              ))}
             </span>
-          ) : (
-            !expanded && (
-              <span className="ex-dots" aria-label={`${loggedSets.length} of ${target.sets} sets`}>
-                {Array.from({ length: dotCount }, (_, i) => (
-                  <span key={i} className={`ex-dot${i < loggedSets.length ? " on" : ""}`} />
-                ))}
-              </span>
-            )
           )}
           <span className={`ex-chevron${expanded ? " open" : ""}`}>
             <IconChevronRight />
@@ -239,30 +223,6 @@ export default function ExerciseLogCard({
             })}
           </div>
 
-          {timer.running ? (
-            <div className="ex-timer" role="timer" aria-live="off">
-              <div className="ex-timer-fill" style={{ transform: `scaleX(${progress})` }} />
-              <span className="ex-timer-label">
-                <IconTimer width={16} height={16} /> Rest
-              </span>
-              <span className="ex-timer-time">{formatClock(timer.remaining)}</span>
-              <span className="ex-timer-controls">
-                <button onClick={() => onAdjustTimer(-15)} aria-label="Kurang 15 saat">
-                  −15
-                </button>
-                <button onClick={() => onAdjustTimer(15)} aria-label="Tambah 15 saat">
-                  +15
-                </button>
-                <button className="ex-timer-stop" onClick={onStopTimer} aria-label="Stop timer">
-                  <IconClose width={14} height={14} />
-                </button>
-              </span>
-            </div>
-          ) : timer.finished ? (
-            <div className="ex-timer finished">
-              <span className="ex-timer-label">💪 Rest habis — jom set seterusnya!</span>
-            </div>
-          ) : null}
 
           <div className="ex-actions">
             <button className="exercise-action" onClick={handleAddSet}>
@@ -273,11 +233,9 @@ export default function ExerciseLogCard({
                 <IconPlus width={14} height={14} /> Note
               </button>
             )}
-            {!timer.running && (
-              <button className="exercise-action ex-rest-btn" onClick={onStartTimer}>
-                <IconTimer width={14} height={14} /> {formatClock(restSeconds)}
-              </button>
-            )}
+            <button className="exercise-action ex-rest-btn" onClick={onStartTimer} aria-label="Mula rest timer">
+              <IconTimer width={14} height={14} /> {formatClock(restSeconds)}
+            </button>
           </div>
 
           {noteOpen && (

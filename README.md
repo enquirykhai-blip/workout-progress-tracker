@@ -76,12 +76,13 @@ an afterthought, alongside the workout split.
   and the exercise card shows your current best inline.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
-- **Rest timer per exercise** — every exercise has its own countdown, shown
-  inside its card. It starts when a set is logged (or tap the ⏱ button), with
-  −15 / +15 / stop controls and a vibration + "Rest habis" flash at zero. A
-  collapsed exercise shows its live countdown as a chip, and timers keep
-  running across tabs. Default length is "Auto" (2 min, or 3 min for Legs);
-  60 / 120 / 180s can be picked in the account menu.
+- **Focus rest timer** — logging a set opens one full-screen timer: a big
+  ring countdown, the exercise name, "Next up" (the next set, or the next
+  exercise), and −15s / Skip rest / +15s. Minimise it to a floating pill
+  (tap to reopen). At zero the phone vibrates, it shows "GO!" and closes on
+  its own. The ⏱ button in an exercise opens it manually. Default length is
+  "Auto" (2 min, or 3 min for Legs); 60 / 120 / 180s can be picked in the
+  account menu.
 - **Install as an app** — installable on your phone's home screen (PWA), works
   offline for the app shell once visited.
 - **Delete a set** — a × next to any already-logged set removes it and
@@ -169,12 +170,12 @@ Built with the modular Firebase JS SDK (v9+):
 
 ## Rest Timer
 
-`src/hooks/useExerciseTimers.js` keeps one countdown per exercise id, driven
-off absolute end timestamps (not decrementing counters) so they stay
-accurate even if the tab is backgrounded. It lives in `App.jsx`, which
-starts the exercise's timer every time a set is logged, so timers survive
-collapsing a card or switching tabs. `src/components/ExerciseLogCard.jsx`
-renders the in-card timer strip and the collapsed-row chip.
+`src/hooks/useFocusTimer.js` keeps the single rest countdown, driven off an
+absolute end timestamp (not a decrementing counter) so it stays accurate
+even if the tab is backgrounded. It lives in `App.jsx`, which starts it
+every time a set is logged, so it survives switching tabs.
+`src/components/FocusTimer.jsx` renders the full-screen timer and the
+minimised pill.
 
 `src/hooks/useRestTimer.js` holds the length preference: "Auto" by default
 (the program's `restSeconds` from `src/data/exercises.js`) or a fixed

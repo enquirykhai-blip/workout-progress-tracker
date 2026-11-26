@@ -1972,19 +1972,6 @@ input::placeholder, textarea::placeholder {
   background: var(--accent);
 }
 
-.ex-timer-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 9px;
-  border-radius: 999px;
-  background: var(--accent);
-  color: var(--on-accent);
-  font-size: 12.5px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
 .ex-chevron {
   display: flex;
   color: var(--text-tertiary);
@@ -2022,90 +2009,6 @@ input::placeholder, textarea::placeholder {
   margin-top: 0;
 }
 
-/* Per-exercise rest timer */
-.ex-timer {
-  position: relative;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 54px;
-  margin-top: 12px;
-  padding: 0 8px 0 16px;
-  border-radius: 16px;
-  background: #111;
-  color: #fff;
-}
-
-.ex-timer > :not(.ex-timer-fill) {
-  position: relative;
-}
-
-.ex-timer-fill {
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, 0.13);
-  transform-origin: left;
-  transition: transform 0.25s linear;
-}
-
-.ex-timer-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.ex-timer-time {
-  flex: 1;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  font-variant-numeric: tabular-nums;
-}
-
-.ex-timer-controls {
-  display: flex;
-  gap: 6px;
-}
-
-.ex-timer-controls button {
-  min-width: 44px;
-  height: 38px;
-  padding: 0 10px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.14);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.ex-timer-controls button:active {
-  background: rgba(255, 255, 255, 0.24);
-}
-
-.ex-timer-controls .ex-timer-stop {
-  min-width: 38px;
-  padding: 0;
-}
-
-.ex-timer.finished {
-  justify-content: center;
-  padding: 0 16px;
-  animation: hero-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.ex-timer.finished .ex-timer-label {
-  color: #fff;
-  font-size: 14px;
-}
-
 .ex-actions {
   display: flex;
   gap: 8px;
@@ -2118,8 +2021,7 @@ input::placeholder, textarea::placeholder {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ex-body,
-  .ex-timer.finished {
+  .ex-body {
     animation: none;
   }
 }
@@ -2133,4 +2035,214 @@ input::placeholder, textarea::placeholder {
 
 .ex-body .set-delete-btn {
   width: 28px;
+}
+
+/* --- Focus rest timer: full screen, one thing to look at --- */
+.focus-timer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: calc(16px + var(--safe-top)) 24px calc(28px + var(--safe-bottom));
+  background: radial-gradient(120% 80% at 50% 0%, #262626 0%, #0a0a0a 60%, #000 100%);
+  color: #fff;
+  animation: focus-in 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes focus-in {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.focus-top {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.focus-icon-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.focus-icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.focus-icon-btn.ghost {
+  background: none;
+}
+
+.focus-icon-btn:disabled {
+  opacity: 0;
+}
+
+.focus-eyebrow {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.focus-title {
+  margin-top: 18px;
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-align: center;
+  max-width: 320px;
+}
+
+.focus-ring {
+  position: relative;
+  margin: auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 78vw;
+  max-height: 78vw;
+}
+
+.focus-ring svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.focus-ring-center {
+  position: relative;
+  text-align: center;
+}
+
+.focus-time {
+  font-size: 72px;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-total {
+  margin-top: 8px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.45);
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-go {
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  animation: hero-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.focus-next {
+  width: 100%;
+  max-width: 360px;
+  padding: 14px 18px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  text-align: center;
+  margin-bottom: 22px;
+}
+
+.focus-next-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.focus-next-value {
+  margin-top: 4px;
+  font-size: 15.5px;
+  font-weight: 600;
+}
+
+.focus-controls {
+  width: 100%;
+  max-width: 360px;
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 10px;
+}
+
+.focus-adjust,
+.focus-skip {
+  height: 56px;
+  border-radius: 999px;
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: transform 0.12s ease;
+}
+
+.focus-adjust {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.focus-skip {
+  background: #fff;
+  color: #111;
+}
+
+.focus-adjust:active,
+.focus-skip:active {
+  transform: scale(0.96);
+}
+
+.focus-timer.is-go {
+  background: radial-gradient(120% 80% at 50% 0%, #3a3a3a 0%, #111 60%, #000 100%);
+}
+
+/* Minimised: a small pill floating above the bottom nav. */
+.focus-pill {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(96px + var(--safe-bottom));
+  z-index: 45;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 46px;
+  padding: 0 18px;
+  border-radius: 999px;
+  background: #111;
+  color: #fff;
+  box-shadow: var(--shadow-float);
+  animation: fade-in 0.2s ease;
+}
+
+.focus-pill-time {
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.focus-pill-label {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-timer,
+  .focus-pill,
+  .focus-go {
+    animation: none;
+  }
 }

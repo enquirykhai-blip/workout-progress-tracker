@@ -51,7 +51,7 @@ export default function Today({
   dayOverrides = {},
   onPickProgram,
   restPreference = "auto",
-  timers,
+  onStartRest,
 }) {
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date(), dayOverrides);
@@ -87,6 +87,14 @@ export default function Today({
     const t = setTimeout(() => setOpenId(nextId), 500);
     return () => clearTimeout(t);
   }, [nextId]);
+
+  // What comes after this set — shown as "Next up" on the rest timer.
+  function nextUpAfter(i, setNumber) {
+    const { exercise, target } = items[i];
+    if (setNumber < target.sets) return `Set ${setNumber + 1} of ${target.sets} · ${exercise.name}`;
+    const following = items.slice(i + 1).find(({ exercise: e, target: t }) => !isExerciseDone(e, t));
+    return following ? following.exercise.name : "Last set — workout complete!";
+  }
 
   function scrollToNext() {
     const target = nextItem || items[0];
@@ -311,13 +319,18 @@ export default function Today({
                   done={isExerciseDone(exercise, target)}
                   expanded={openId === exercise.id}
                   onToggle={() => setOpenId((cur) => (cur === exercise.id ? null : exercise.id))}
-                  timer={timers.get(exercise.id)}
                   restSeconds={restSeconds}
-                  onStartTimer={() => timers.start(exercise.id, restSeconds)}
-                  onAdjustTimer={(delta) => timers.adjust(exercise.id, delta)}
-                  onStopTimer={() => timers.stop(exercise.id)}
+                  onStartTimer={() => {
+                    const logged = findSession(sessions, date, exercise.id)?.sets.length || 0;
+                    onStartRest?.(restSeconds, {
+                      title: exercise.name,
+                      next: nextUpAfter(i, Math.max(logged, 1)),
+                    });
+                  }}
                   onLogSet={(setNumber, weight, reps) =>
-                    onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds)
+                    onLogSet(exercise, dayInfo.key, setNumber, weight, reps, dayInfo.restSeconds, {
+                      next: nextUpAfter(i, setNumber),
+                    })
                   }
                   onDeleteSet={(setNumber) => onDeleteSet(exercise, setNumber)}
                   onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
