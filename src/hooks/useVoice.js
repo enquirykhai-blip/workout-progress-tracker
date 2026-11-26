@@ -1,26 +1,24 @@
 import { useCallback, useEffect, useRef } from "react";
 
 // Shared voice / sound / screen helpers for the Rep Coach and Focus Mode.
+// All speech is English.
 
-const MS_ONES = ["", "satu", "dua", "tiga", "empat", "lima", "enam", "tujuh", "lapan", "sembilan"];
-export function malayNumber(n) {
-  if (n <= 0) return "kosong";
-  if (n < 10) return MS_ONES[n];
-  if (n === 10) return "sepuluh";
-  if (n === 11) return "sebelas";
-  if (n < 20) return `${MS_ONES[n - 10]} belas`;
-  const tens = Math.floor(n / 10);
-  const rest = n % 10;
-  return `${MS_ONES[tens]} puluh${rest ? ` ${MS_ONES[rest]}` : ""}`;
-}
+// ---- Speech: English, preferring a male voice. ----
+// Browsers don't expose a voice's gender, so we match the names of the
+// common male voices on iOS/macOS, Android (Google) and Windows.
+const MALE_VOICE =
+  /\b(daniel|aaron|arthur|alex|fred|tom|rishi|oliver|gordon|reed|rocko|eddy|ralph|albert|bruce|david|mark|guy|ryan|christopher|eric|roger|andrew|brian|george|james|william|liam|thomas|male)\b|en-(us|gb|au|in)-x-(iom|iol|tpd|rjs|gbd|aud|ene)/i;
 
-// ---- Speech: Malay when the phone has a Malay voice, English otherwise. ----
 function pickVoice() {
-  const voices = window.speechSynthesis?.getVoices?.() || [];
-  const ms = voices.find((v) => /^ms|^id/i.test(v.lang));
-  if (ms) return { voice: ms, malay: true };
-  const en = voices.find((v) => /^en/i.test(v.lang));
-  return { voice: en || null, malay: false };
+  const voices = (window.speechSynthesis?.getVoices?.() || []).filter((v) => /^en/i.test(v.lang));
+  const male = voices.filter((v) => MALE_VOICE.test(`${v.name} ${v.voiceURI || ""}`));
+  const byLocal = (list) => list.find((v) => v.localService) || list[0];
+  const preferred = (list) =>
+    byLocal(list.filter((v) => /^en-(gb|us)/i.test(v.lang))) || byLocal(list);
+  const voice = preferred(male);
+  if (voice) return { voice, pitch: 0.95 };
+  // No male voice installed: use any English voice, pitched down.
+  return { voice: preferred(voices) || null, pitch: 0.72 };
 }
 
 export function useSpeech(enabled) {
@@ -34,15 +32,14 @@ export function useSpeech(enabled) {
   }, []);
 
   const say = useCallback(
-    (ms, en, { interrupt = true } = {}) => {
+    (text, { interrupt = true } = {}) => {
       if (!enabled || !("speechSynthesis" in window)) return;
       const v = voiceRef.current || pickVoice();
-      const u = new SpeechSynthesisUtterance(v.malay ? ms : en);
-      if (v.voice) {
-        u.voice = v.voice;
-        u.lang = v.voice.lang;
-      }
-      u.rate = 1.05;
+      const u = new SpeechSynthesisUtterance(text);
+      if (v.voice) u.voice = v.voice;
+      u.lang = v.voice?.lang || "en-US";
+      u.pitch = v.pitch;
+      u.rate = 1.02;
       if (interrupt) window.speechSynthesis.cancel();
       window.speechSynthesis.speak(u);
     },
@@ -55,7 +52,7 @@ export function useSpeech(enabled) {
 
 // ---- Ticks via Web Audio (works offline, no files). ----
 // One AudioContext for the whole app: iOS only lets audio start from a tap,
-// so once it's unlocked by the first "Mula" it stays usable for the
+// so once it's unlocked by the first "Start" it stays usable for the
 // auto-started sets that follow in Focus Mode.
 let sharedCtx = null;
 export function unlockAudio() {

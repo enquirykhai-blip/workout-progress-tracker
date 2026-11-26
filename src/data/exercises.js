@@ -93,7 +93,7 @@ export const PROGRAMS = {
     ex("ohd-tricep-ext", "Tricep DB Extension – Heavy", "Tricep", "Compound"),
     ex("skull-crusher", "Skull Crusher", "Tricep", "Isolation"),
     ex("db-kickback", "DB Tricep Kick Back", "Tricep", "Isolation"),
-    ex("dips", "Dips (Badan Tegak)", "Tricep", "Compound"),
+    ex("dips", "Dips (Upright)", "Tricep", "Compound"),
     ],
   },
 };
@@ -114,22 +114,22 @@ export const WARMUP_SETS = 0;
 
 // Shared "Start Gym" guideline, shown on every training day.
 export const GUIDELINE = [
-  { title: "Warm Up", body: "Ringan sebelum set #1 – pastikan muscle tersebut gerak." },
+  { title: "Warm Up", body: "Go light before set #1 – get the target muscle moving." },
   { title: "Working Set (Set #1, #2)", body: "Push all out till failure." },
-  { title: "Volume", body: "Semua workout 2 sets × 15 reps." },
-  { title: "Tempo", body: "Workout slowly, hold 4 saat dan squeeze selama 4 saat sebelum buat rep ke-2." },
+  { title: "Volume", body: "Every exercise is 2 sets × 15 reps." },
+  { title: "Tempo", body: "Move slowly — hold and squeeze for 4 seconds before the next rep." },
   { title: "Rest", body: "2–3 mins antara set." },
 ];
 
 // Default weekly schedule. programId null = rest day.
 export const DAYS = [
-  { key: "ahad", label: "Ahad", jsDay: 0, programId: null },
-  { key: "isnin", label: "Isnin", jsDay: 1, programId: null },
-  { key: "selasa", label: "Selasa", jsDay: 2, programId: "back" },
-  { key: "rabu", label: "Rabu", jsDay: 3, programId: "shoulder" },
-  { key: "khamis", label: "Khamis", jsDay: 4, programId: null },
-  { key: "jumaat", label: "Jumaat", jsDay: 5, programId: "bicep" },
-  { key: "sabtu", label: "Sabtu", jsDay: 6, programId: "tricep" },
+  { key: "ahad", label: "Sunday", jsDay: 0, programId: null },
+  { key: "isnin", label: "Monday", jsDay: 1, programId: null },
+  { key: "selasa", label: "Tuesday", jsDay: 2, programId: "back" },
+  { key: "rabu", label: "Wednesday", jsDay: 3, programId: "shoulder" },
+  { key: "khamis", label: "Thursday", jsDay: 4, programId: null },
+  { key: "jumaat", label: "Friday", jsDay: 5, programId: "bicep" },
+  { key: "sabtu", label: "Saturday", jsDay: 6, programId: "tricep" },
 ];
 
 export const DAY_BY_JS_DAY = Object.fromEntries(DAYS.map((d) => [d.jsDay, d]));

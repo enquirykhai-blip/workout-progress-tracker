@@ -325,8 +325,8 @@ export default function Nutrition({ entries, targets, onAddEntry, onDeleteEntry,
       ) : (
         <button className="card empty-card" onClick={() => setAddOpen(true)}>
           <span className="empty-card-icon">🍽️</span>
-          <span className="empty-card-title">Belum ada makanan hari ni</span>
-          <span className="empty-card-sub">Tap untuk tambah — scan gambar, taip, atau paste macro.</span>
+          <span className="empty-card-title">Nothing logged yet today</span>
+          <span className="empty-card-sub">Tap to add — scan a photo, type it, or paste macros.</span>
         </button>
       )}
 

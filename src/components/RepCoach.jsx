@@ -4,7 +4,7 @@ import { IconClose } from "./icons";
 import { haptic } from "../utils/motion";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
-import { malayNumber, useSpeech, useTicks, useWakeLock } from "../hooks/useVoice";
+import { useSpeech, useTicks, useWakeLock } from "../hooks/useVoice";
 
 // Hands-free rep counter. Paces every rep on the plan's tempo (lift → hold &
 // squeeze → lower), ticks at each phase change, and says the rep number out
@@ -14,15 +14,14 @@ import { malayNumber, useSpeech, useTicks, useWakeLock } from "../hooks/useVoice
 
 // Phase lengths in seconds: [lift, hold & squeeze, lower].
 const TEMPOS = {
-  plan: { label: "Tahan 4s", phases: [1.5, 4, 2] },
-  medium: { label: "Tahan 2s", phases: [1.5, 2, 2] },
-  fast: { label: "Tanpa tahan", phases: [1, 0, 1.5] },
+  plan: { label: "Hold 4s", phases: [1.5, 4, 2] },
+  medium: { label: "Hold 2s", phases: [1.5, 2, 2] },
+  fast: { label: "No hold", phases: [1, 0, 1.5] },
 };
 
-const PHASE_LABEL = ["Angkat", "Tahan & squeeze", "Turun"];
-// What the voice says at the start of each phase (Malay / English).
-const PHASE_CUE_MS = ["angkat", "tahan, squeeze", "turun"];
-const PHASE_CUE_EN = ["lift", "hold, squeeze", "lower"];
+const PHASE_LABEL = ["Lift", "Hold & squeeze", "Lower"];
+// What the voice says at the start of each phase.
+const PHASE_CUE = ["lift", "hold, squeeze", "lower"];
 const PHASE_TONE = [880, 660, 440];
 const COUNTDOWN_S = 3;
 
@@ -31,7 +30,7 @@ const STROKE = 10;
 
 // Props for Focus Mode: `embedded` renders inline (the session owns the
 // overlay), `autoStart` skips the ready screen, `autoSaveMs` saves the count
-// on its own shortly after "Siap!" unless the user adjusts it, and
+// on its own shortly after "Done!" unless the user adjusts it, and
 // `eyebrow` replaces the "Set n of m" line.
 export default function RepCoach({
   exerciseName,
@@ -48,7 +47,7 @@ export default function RepCoach({
 }) {
   const [tempoKey, setTempoKey] = useLocalStorageState(STORAGE_KEYS.REP_TEMPO, "plan");
   const [voiceOn, setVoiceOn] = useLocalStorageState(STORAGE_KEYS.REP_VOICE, true);
-  // Speak "angkat / tahan, squeeze / turun" at every phase, not just numbers.
+  // Speak "lift / hold, squeeze / lower" at every phase, not just numbers.
   const [phaseCues, setPhaseCues] = useLocalStorageState(STORAGE_KEYS.REP_PHASE_CUES, true);
   const tempo = TEMPOS[tempoKey] || TEMPOS.plan;
 
@@ -80,17 +79,16 @@ export default function RepCoach({
     haptic(15);
     const left = goal - n;
     if (n >= goal) {
-      say(`${malayNumber(n)}. Siap!`, `${n}. Done!`);
+      say(`${n}. Done!`);
       tick(1046, 0.25, 0.22);
       setStatus("done");
       return false;
     }
-    // The rep number and the next "angkat" land at the same instant, so they
+    // The rep number and the next "lift" land at the same instant, so they
     // go out as one utterance instead of cutting each other off.
-    const cueMs = phaseCues ? `, ${PHASE_CUE_MS[0]}` : "";
-    const cueEn = phaseCues ? `, ${PHASE_CUE_EN[0]}` : "";
-    if (left === 2) say(`${malayNumber(n)}. Dua lagi${cueMs}!`, `${n}. Two more${cueEn}!`);
-    else say(`${malayNumber(n)}${cueMs}`, `${n}${cueEn}`);
+    const cue = phaseCues ? `, ${PHASE_CUE[0]}` : "";
+    if (left === 2) say(`${n}. Two more${cue}!`);
+    else say(`${n}${cue}`);
     return true;
   }, [goal, say, tick, phaseCues]);
 
@@ -114,9 +112,9 @@ export default function RepCoach({
         setPhase(next);
         setPhaseProgress(0);
         tick(PHASE_TONE[next]);
-        // "tahan, squeeze" / "turun" — queued (not interrupting) so the rep
-        // number before it is never cut short. "angkat" rides with the number.
-        if (phaseCues && next !== 0) say(PHASE_CUE_MS[next], PHASE_CUE_EN[next], { interrupt: false });
+        // "hold, squeeze" / "lower" — queued (not interrupting) so the rep
+        // number before it is never cut short. "lift" rides with the number.
+        if (phaseCues && next !== 0) say(PHASE_CUE[next], { interrupt: false });
       } else {
         setPhaseProgress(len ? elapsed / len : 1);
       }
@@ -130,7 +128,7 @@ export default function RepCoach({
   useEffect(() => {
     if (status !== "countdown") return;
     if (countdown === 0) {
-      say(phaseCues ? "Mula. Angkat!" : "Mula!", phaseCues ? "Go. Lift!" : "Go!");
+      say(phaseCues ? "Go. Lift!" : "Go!");
       eng.current.phase = 0;
       eng.current.phaseStart = performance.now();
       setPhase(0);
@@ -139,7 +137,7 @@ export default function RepCoach({
       setStatus("running");
       return;
     }
-    say(malayNumber(countdown), String(countdown), { interrupt: false });
+    say(String(countdown), { interrupt: false });
     tick(520, 0.06, 0.12);
     const t = setTimeout(() => setCountdown((c) => c - 1), 1000);
     return () => clearTimeout(t);
@@ -157,8 +155,8 @@ export default function RepCoach({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoStart]);
 
-  // Focus Mode: save the count a moment after "Siap!" unless the user
-  // touches −1/+1/Teruskan first.
+  // Focus Mode: save the count a moment after "Done!" unless the user
+  // touches −1/+1/Keep going first.
   const [autoSaveOff, setAutoSaveOff] = useState(false);
   useEffect(() => {
     if (status !== "done" || !autoSaveMs || autoSaveOff) {
@@ -179,7 +177,7 @@ export default function RepCoach({
 
   function start() {
     unlock(); // audio + speech must be started from a tap on iOS
-    say("Sedia", "Ready");
+    say("Ready");
     eng.current = { phase: 0, phaseStart: 0, reps: 0, pausedAt: 0 };
     setReps(0);
     setGoal(targetReps);
@@ -211,7 +209,7 @@ export default function RepCoach({
     eng.current.phase = 0;
     eng.current.phaseStart = performance.now();
     setPhase(0);
-    say(phaseCues ? "Teruskan. Angkat!" : "Teruskan!", phaseCues ? "Keep going. Lift!" : "Keep going!");
+    say(phaseCues ? "Keep going. Lift!" : "Keep going!");
     setStatus("running");
   }
 
@@ -230,7 +228,7 @@ export default function RepCoach({
   const view = (
     <div className={`coach coach-${status}${embedded ? " coach-embedded" : ""}`} role="dialog" aria-label="Rep coach">
       <div className="coach-top">
-        <button className="focus-icon-btn" onClick={onClose} aria-label="Tutup">
+        <button className="focus-icon-btn" onClick={onClose} aria-label="Close">
           <IconClose width={18} height={18} />
         </button>
         <div className="coach-head">
@@ -247,7 +245,7 @@ export default function RepCoach({
         <button
           className={`focus-icon-btn coach-voice${voiceOn ? " on" : ""}`}
           onClick={() => setVoiceOn((v) => !v)}
-          aria-label={voiceOn ? "Matikan suara" : "Hidupkan suara"}
+          aria-label={voiceOn ? "Mute voice" : "Unmute voice"}
           aria-pressed={voiceOn}
         >
           {voiceOn ? "🔊" : "🔇"}
@@ -275,7 +273,7 @@ export default function RepCoach({
           {status === "ready" && (
             <>
               <div className="coach-big">{targetReps}</div>
-              <div className="coach-sub">reps · ikut tempo</div>
+              <div className="coach-sub">reps · on tempo</div>
             </>
           )}
           {status === "countdown" && (
@@ -288,7 +286,7 @@ export default function RepCoach({
               <div className="coach-big" key={bump}>
                 {reps}
               </div>
-              <div className="coach-sub">{status === "done" ? "reps siap" : `of ${goal}`}</div>
+              <div className="coach-sub">{status === "done" ? "reps done" : `of ${goal}`}</div>
             </>
           )}
         </div>
@@ -328,17 +326,17 @@ export default function RepCoach({
           <span className="coach-toggle-track">
             <span className="coach-toggle-thumb" />
           </span>
-          Sebut fasa (angkat · tahan · turun)
+          Call out phases (lift · hold · lower)
         </button>
       )}
 
       {status === "done" && (
         <div className="coach-adjust">
-          <button className="focus-adjust" onClick={() => adjust(-1)} aria-label="Tolak satu rep">
+          <button className="focus-adjust" onClick={() => adjust(-1)} aria-label="Remove one rep">
             −1
           </button>
-          <div className="coach-adjust-note">{weight ? `${weight}kg × ${reps}` : "Betulkan kalau perlu"}</div>
-          <button className="focus-adjust" onClick={() => adjust(1)} aria-label="Tambah satu rep">
+          <div className="coach-adjust-note">{weight ? `${weight}kg × ${reps}` : "Adjust if needed"}</div>
+          <button className="focus-adjust" onClick={() => adjust(1)} aria-label="Add one rep">
             +1
           </button>
         </div>
@@ -347,12 +345,12 @@ export default function RepCoach({
       <div className="coach-controls">
         {status === "ready" && (
           <button className="focus-skip coach-main" onClick={start}>
-            ▶ Mula
+            ▶ Start
           </button>
         )}
         {status === "countdown" && (
           <button className="focus-adjust coach-main" onClick={() => setStatus("ready")}>
-            Batal
+            Cancel
           </button>
         )}
         {counting && (
@@ -363,7 +361,7 @@ export default function RepCoach({
               </button>
             ) : (
               <button className="focus-adjust" onClick={resume}>
-                ▶ Sambung
+                ▶ Resume
               </button>
             )}
             <button className="focus-skip" onClick={finishNow}>
@@ -374,10 +372,10 @@ export default function RepCoach({
         {status === "done" && (
           <>
             <button className="focus-adjust" onClick={keepGoing}>
-              + Teruskan
+              + Keep going
             </button>
             <button className="focus-skip" onClick={() => onFinish(reps)} disabled={reps === 0}>
-              {weight ? "Simpan set" : "Isi reps"}
+              {weight ? "Save set" : "Fill reps"}
               {autoSaveLeft != null && !autoSaveOff ? ` · ${autoSaveLeft}` : ""}
             </button>
           </>

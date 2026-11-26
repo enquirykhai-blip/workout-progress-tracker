@@ -1,8 +1,8 @@
 import { DAY_BY_JS_DAY, planForDate } from "../data/exercises";
 
 const MALAY_MONTHS = [
-  "Januari", "Februari", "Mac", "April", "Mei", "Jun",
-  "Julai", "Ogos", "September", "Oktober", "November", "Disember",
+  "January", "February", "March", "April", "May", "June",
+  "July", "August", "September", "October", "November", "December",
 ];
 
 export function toISODate(date) {
@@ -43,7 +43,7 @@ export function addDays(date, n) {
   return copy;
 }
 
-// Week runs Isnin (Mon) -> Ahad (Sun), matching the split's weekly rhythm.
+// Week runs Monday -> Sunday, matching the split's weekly rhythm.
 export function startOfWeek(date) {
   const jsDay = date.getDay(); // 0 = Sunday
   const diffFromMonday = jsDay === 0 ? 6 : jsDay - 1;

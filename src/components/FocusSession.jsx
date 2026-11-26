@@ -4,7 +4,7 @@ import RepCoach from "./RepCoach";
 import ExerciseDemo from "./ExerciseDemo";
 import { IconClose } from "./icons";
 import { findSession } from "../utils/sessionOps";
-import { malayNumber, useSpeech, useTicks, useWakeLock, unlockAudio } from "../hooks/useVoice";
+import { useSpeech, useTicks, useWakeLock, unlockAudio } from "../hooks/useVoice";
 import { useLocalStorageState } from "../hooks/useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
 import { haptic } from "../utils/motion";
@@ -43,7 +43,7 @@ function WeightStepper({ value, onChange, step = 2.5 }) {
   };
   return (
     <div className="fs-weight">
-      <button className="fs-weight-btn" onClick={() => bump(-step)} aria-label={`Kurang ${step}kg`}>
+      <button className="fs-weight-btn" onClick={() => bump(-step)} aria-label={`Minus ${step}kg`}>
         −
       </button>
       <label className="fs-weight-field">
@@ -53,11 +53,11 @@ function WeightStepper({ value, onChange, step = 2.5 }) {
           placeholder="—"
           value={value}
           onChange={(e) => onChange(e.target.value.replace(/[^0-9.]/g, ""))}
-          aria-label="Berat (kg)"
+          aria-label="Weight (kg)"
         />
         <span>kg</span>
       </label>
-      <button className="fs-weight-btn" onClick={() => bump(step)} aria-label={`Tambah ${step}kg`}>
+      <button className="fs-weight-btn" onClick={() => bump(step)} aria-label={`Plus ${step}kg`}>
         +
       </button>
     </div>
@@ -118,7 +118,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
       }
       if (!nq) {
         stopSpeech();
-        say("Workout siap! Syabas.", "Workout complete. Well done!");
+        say("Workout complete. Well done!");
         haptic([20, 80, 20, 80, 40]);
         setStage("complete");
         return;
@@ -143,11 +143,9 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
     warned.current = false;
     const nq = queue[idx + 1];
     const sameExercise = nq.exercise.id === queue[idx].exercise.id;
-    const what = sameExercise
-      ? { ms: `set ${malayNumber(nq.setNumber)}`, en: `set ${nq.setNumber}` }
-      : { ms: nq.exercise.name, en: nq.exercise.name };
-    // Queued after Rep Coach's "Siap!" so it isn't cut off.
-    say(`Rehat. Seterusnya, ${what.ms}.`, `Rest. Next, ${what.en}.`, { interrupt: false });
+    const what = sameExercise ? `set ${nq.setNumber}` : nq.exercise.name;
+    // Queued after Rep Coach's "Done!" so it isn't cut off.
+    say(`Rest. Next up, ${what}.`, { interrupt: false });
   }, [stage, restSeconds, queue, idx, say]);
 
   const restLeft = stage === "rest" ? Math.max(0, Math.ceil((restEnd - now) / 1000)) : 0;
@@ -165,7 +163,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
       const left = Math.ceil((restEnd - t) / 1000);
       if (left === 10 && !warned.current) {
         warned.current = true;
-        say("Sepuluh saat lagi.", "Ten seconds.", { interrupt: false });
+        say("Ten seconds.", { interrupt: false });
         tick(660, 0.08, 0.14);
       }
       if (left <= 0) {
@@ -226,7 +224,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
   const c = 2 * Math.PI * r;
 
   return createPortal(
-    <div className={`fs fs-${stage}`} role="dialog" aria-label="Mod Fokus">
+    <div className={`fs fs-${stage}`} role="dialog" aria-label="Focus Mode">
       <div className="fs-progress" aria-hidden="true">
         <span style={{ transform: `scaleX(${progressPct})` }} />
       </div>
@@ -251,12 +249,12 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
       {stage === "prep" && cur && (
         <div className="fs-screen">
           <div className="coach-top">
-            <button className="focus-icon-btn" onClick={onClose} aria-label="Keluar Mod Fokus">
+            <button className="focus-icon-btn" onClick={onClose} aria-label="Exit Focus Mode">
               <IconClose width={18} height={18} />
             </button>
             <div className="coach-head">
               <div className="coach-eyebrow">{eyebrow}</div>
-              <div className="coach-title">Mod Fokus · {focusLabel}</div>
+              <div className="coach-title">Focus Mode · {focusLabel}</div>
             </div>
             <span className="focus-icon-btn ghost" />
           </div>
@@ -280,7 +278,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
             <span className="coach-toggle-track">
               <span className="coach-toggle-thumb" />
             </span>
-            Auto mula set seterusnya lepas rest
+            Auto-start the next set after rest
           </button>
 
           <div className="coach-controls">
@@ -288,7 +286,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
               Skip
             </button>
             <button className="focus-skip" onClick={begin}>
-              ▶ Mula set {cur.setNumber}
+              ▶ Start set {cur.setNumber}
             </button>
           </div>
         </div>
@@ -297,7 +295,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
       {stage === "rest" && next && (
         <div className="fs-screen">
           <div className="coach-top">
-            <button className="focus-icon-btn" onClick={onClose} aria-label="Keluar Mod Fokus">
+            <button className="focus-icon-btn" onClick={onClose} aria-label="Exit Focus Mode">
               <IconClose width={18} height={18} />
             </button>
             <div className="coach-head">
@@ -328,7 +326,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
             </svg>
             <div className="coach-center">
               <div className="focus-time">{formatClock(restLeft)}</div>
-              <div className="coach-sub">{autoNext ? "lepas ni terus mula" : "rehat"}</div>
+              <div className="coach-sub">{autoNext ? "then straight into it" : "rest"}</div>
             </div>
           </div>
 
@@ -339,13 +337,13 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
           </div>
 
           <div className="coach-controls">
-            <button className="focus-adjust" onClick={() => adjustRest(-15)} aria-label="Kurang 15 saat">
+            <button className="focus-adjust" onClick={() => adjustRest(-15)} aria-label="Minus 15 seconds">
               −15s
             </button>
             <button className="focus-skip" onClick={skipRest}>
-              Mula ▶
+              Start ▶
             </button>
-            <button className="focus-adjust" onClick={() => adjustRest(15)} aria-label="Tambah 15 saat">
+            <button className="focus-adjust" onClick={() => adjustRest(15)} aria-label="Plus 15 seconds">
               +15s
             </button>
           </div>
@@ -357,7 +355,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
           <div className="coach-top">
             <span className="focus-icon-btn ghost" />
             <div className="coach-head">
-              <div className="coach-eyebrow">Mod Fokus</div>
+              <div className="coach-eyebrow">Focus Mode</div>
               <div className="coach-title">{focusLabel} Day</div>
             </div>
             <span className="focus-icon-btn ghost" />
@@ -382,7 +380,7 @@ export default function FocusSession({ items, sessions, date, restSeconds, focus
           </div>
           <div className="coach-controls">
             <button className="focus-skip" onClick={onClose}>
-              Selesai
+              Finish
             </button>
           </div>
         </div>

@@ -187,9 +187,9 @@ export default function ExerciseLogCard({
               </div>
               <div className="ex-demo-text">
                 <div className="ex-demo-title">
-                  Cara buat
+                  How to
                   {onToggleDemo && (
-                    <button className="ex-demo-hide" onClick={onToggleDemo} aria-label="Sembunyi demo">
+                    <button className="ex-demo-hide" onClick={onToggleDemo} aria-label="Hide demo">
                       <IconClose width={12} height={12} />
                     </button>
                   )}
@@ -272,8 +272,8 @@ export default function ExerciseLogCard({
                 ▶
               </span>
               <span className="coach-launch-text">
-                <span className="coach-launch-title">Mula set {coachRow.setNumber}</span>
-                <span className="coach-launch-sub">Kira rep dengan suara</span>
+                <span className="coach-launch-title">Start set {coachRow.setNumber}</span>
+                <span className="coach-launch-sub">Voice-counted reps</span>
               </span>
               <span className="coach-launch-reps">{target.repRange} reps</span>
             </button>
@@ -290,10 +290,10 @@ export default function ExerciseLogCard({
             )}
             {DEMOS[exercise.id] && onToggleDemo && !demoOpen && (
               <button className="exercise-action" onClick={onToggleDemo}>
-                Cara buat
+                How to
               </button>
             )}
-            <button className="exercise-action ex-rest-btn" onClick={onStartTimer} aria-label="Mula rest timer">
+            <button className="exercise-action ex-rest-btn" onClick={onStartTimer} aria-label="Start rest timer">
               <IconTimer width={14} height={14} /> {formatClock(restSeconds)}
             </button>
           </div>

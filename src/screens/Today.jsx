@@ -153,7 +153,7 @@ export default function Today({
   const eyebrow = (
     <span className="hero-dark-eyebrow">
       {dayInfo.label} · {formatDisplayDate(date)}
-      {dayInfo.overridden && " · Ditukar"}
+      {dayInfo.overridden && " · Swapped"}
     </span>
   );
 
@@ -174,7 +174,7 @@ export default function Today({
               <div className="hero-dark-text">
                 {eyebrow}
                 <span className="hero-dark-title">Rest Day</span>
-                <span className="hero-dark-sub">Rehat, minum air, makan cukup protein.</span>
+                <span className="hero-dark-sub">Recover, hydrate and get enough protein.</span>
               </div>
               <span className="hero-dark-emoji">🌙</span>
             </div>
@@ -183,7 +183,7 @@ export default function Today({
                 Log today's meals <IconArrowRight width={16} height={16} />
               </button>
               <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
-                <IconSwap width={16} height={16} /> Nak workout?
+                <IconSwap width={16} height={16} /> Train anyway?
               </button>
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function Today({
                 <div className="hero-dark-text">
                   {eyebrow}
                   <span className="hero-dark-title">Workout complete</span>
-                  <span className="hero-dark-sub">{dayInfo.focus} Day siap. Good work!</span>
+                  <span className="hero-dark-sub">{dayInfo.focus} Day done. Good work!</span>
                 </div>
                 <span className="hero-dark-emoji">🏆</span>
               </div>
@@ -250,13 +250,13 @@ export default function Today({
               </div>
               <div className="hero-dark-actions">
                 <button className="hero-dark-cta" onClick={() => setFocusOpen(true)}>
-                  ▶ Mod Fokus
+                  ▶ Focus Mode
                 </button>
                 <button className="hero-dark-swap" onClick={scrollToNext}>
                   {ctaLabel}
                 </button>
                 <button className="hero-dark-swap" onClick={() => setPickerOpen(true)}>
-                  <IconSwap width={16} height={16} /> Tukar
+                  <IconSwap width={16} height={16} /> Swap
                 </button>
               </div>
             </div>
