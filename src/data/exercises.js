@@ -1,5 +1,5 @@
-// Weekly program, following the "Start Gym" plan: 5 training days
-// (Selasa–Sabtu), every exercise 2 sets × 15 reps, both working sets taken
+// Weekly program, following the "Start Gym" plan: 4 training days
+// (Selasa, Rabu, Jumaat, Sabtu), every exercise 2 sets × 15 reps, both working sets taken
 // to failure (warm up lightly before set 1).
 //
 // Each entry carries the muscle it targets (`target`) and whether it's a
@@ -31,13 +31,6 @@ const PLAN = {
     ex("single-arm-side-raise", "Single Arm Side Raises (> 90°)", "Side Delt", "Isolation"),
     ex("upright-row-smith", "Upright Row Smith Machine", "Side Delt", "Compound"),
     ex("shoulder-press-machine", "Shoulder Press Machine / Smith / DB", "Front Delt", "Compound"),
-  ],
-  khamis: [
-    ex("squat-hack", "Squat / Hack Squat", "Quads", "Compound"),
-    ex("leg-press", "Leg Press (Quad Focus)", "Quads", "Compound"),
-    ex("split-squat-db", "Split Squat DB – Low", "Quads", "Compound"),
-    ex("walking-lunges", "Walking Lunges", "Quads", "Compound"),
-    ex("calf-raise", "Calves Raises", "Calves", "Isolation"),
   ],
   jumaat: [
     ex("hammer-curl-db", "Hammer Curl DB", "Bicep", "Compound"),
@@ -78,7 +71,7 @@ export const GUIDELINE = [
   { title: "Working Set (Set #1, #2)", body: "Push all out till failure." },
   { title: "Volume", body: "Semua workout 2 sets × 15 reps." },
   { title: "Tempo", body: "Workout slowly, hold 4 saat dan squeeze selama 4 saat sebelum buat rep ke-2." },
-  { title: "Rest", body: "2–3 mins (majority) | 3–4 mins (legs)." },
+  { title: "Rest", body: "2–3 mins antara set." },
 ];
 
 // restSeconds is what the rest timer auto-starts with on that day (the low
@@ -106,16 +99,7 @@ export const DAYS = [
     rest: "2–3 mins",
     restSeconds: 120,
   },
-  {
-    key: "khamis",
-    label: "Khamis",
-    jsDay: 4,
-    type: "workout",
-    focus: "Legs",
-    keyFocus: ["Quadriceps (Front Thigh)", "Hamstrings (Back Thigh)", "Calves"],
-    rest: "3–4 mins",
-    restSeconds: 180,
-  },
+  { key: "khamis", label: "Khamis", jsDay: 4, type: "rest" },
   {
     key: "jumaat",
     label: "Jumaat",

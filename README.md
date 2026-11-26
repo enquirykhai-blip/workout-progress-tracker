@@ -1,6 +1,6 @@
 # Workout Progress Tracker
 
-A mobile-first web app for tracking a 5-day workout split. Built with React + Vite,
+A mobile-first web app for tracking a 4-day workout split. Built with React + Vite,
 charts via Recharts. Data is stored locally in the browser and synced across devices
 via Firebase (Firestore + email/password auth) when signed in.
 
@@ -10,10 +10,9 @@ via Firebase (Firestore + email/password auth) when signed in.
 |---|---|---|
 | Selasa | Back | 2–3 mins |
 | Rabu | Shoulder | 2–3 mins |
-| Khamis | Legs | 3–4 mins |
 | Jumaat | Bicep + Forearm | 2–3 mins |
 | Sabtu | Tricep | 2–3 mins |
-| Ahad / Isnin | Rest | — |
+| Ahad / Isnin / Khamis | Rest | — |
 
 Every exercise is 2 sets × 15 reps, both working sets taken to failure
 (warm up lightly first), with a slow tempo (hold and squeeze 4 seconds
@@ -69,7 +68,7 @@ an afterthought, alongside the workout split.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
 - **Rest Timer** — auto-starts after logging any set. Default is "Auto",
-  which follows the day's plan (2 min, or 3 min on leg day); a fixed
+  which follows the day's plan (2 min); a fixed
   60–240s can be picked instead in the account menu. Shown with a floating bar showing the countdown, ±15s
   adjustment, and a skip button.
 - **Install as an app** — installable on your phone's home screen (PWA), works
