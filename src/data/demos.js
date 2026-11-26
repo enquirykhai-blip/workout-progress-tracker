@@ -7,7 +7,7 @@
 // IK; `elbow`/`knee` pick which way they bend (side view: elbow +1 = behind,
 // knee -1 = forward; front view: -1 = outward).
 //
-// `cues` are the 3 short "Cara buat" steps shown next to the animation.
+// `cues` are the 3 short "How to" steps shown next to the animation.
 
 const STAND_FEET = [
   [74, 110],
@@ -146,11 +146,11 @@ export const DEMOS = {
   // ---------- Back ----------
   "wide-lat-pulldown": {
     ...pulldown("barSide", "Wide Lat Pull Down"),
-    cues: ["Grip lebar, lebih luas dari bahu", "Tarik bar ke dada atas, siku ke bawah", "Dada keluar, naik perlahan"],
+    cues: ["Wide grip, wider than shoulders", "Pull the bar to your upper chest, elbows down", "Chest up, let it rise slowly"],
   },
   "close-grip-pulldown": {
     ...pulldown("vhandle", "Close Grip Lat Pull Down"),
-    cues: ["Guna V-handle, tangan rapat", "Tarik ke dada, siku rapat ke badan", "Squeeze lats, naik perlahan"],
+    cues: ["Use a V-handle, hands close", "Pull to your chest, elbows tight to your sides", "Squeeze your lats, rise slowly"],
   },
   "barbell-bent-row": {
     label: "Barbell Bent Over Row",
@@ -180,7 +180,7 @@ export const DEMOS = {
         [70, 110],
       ],
     },
-    cues: ["Bongkok ~45°, belakang lurus", "Tarik bar ke perut, siku ke belakang", "Squeeze belakang, turun perlahan"],
+    cues: ["Hinge to ~45°, back flat", "Pull the bar to your belly, elbows back", "Squeeze your back, lower slowly"],
   },
   "single-arm-row": {
     label: "Single Arm DB Row",
@@ -215,7 +215,7 @@ export const DEMOS = {
         [56, 110],
       ],
     },
-    cues: ["Satu tangan & lutut atas bench", "Tarik DB ke pinggang, siku rapat", "Jangan pusing badan, turun perlahan"],
+    cues: ["One hand and knee on the bench", "Row the DB to your hip, elbow tight", "Don't twist, lower slowly"],
   },
   "cable-row": {
     label: "Cable Row",
@@ -251,7 +251,7 @@ export const DEMOS = {
         [100, 100],
       ],
     },
-    cues: ["Duduk tegak, lutut bengkok sikit", "Tarik handle ke perut, dada keluar", "Squeeze, lepas ke depan perlahan"],
+    cues: ["Sit tall, knees slightly bent", "Pull the handle to your belly, chest up", "Squeeze, then reach forward slowly"],
   },
   "lat-pushdown-rope": {
     label: "Lat Push Down (Rope)",
@@ -277,7 +277,7 @@ export const DEMOS = {
       ],
       feet: STAND_FEET,
     },
-    cues: ["Lengan hampir lurus sepanjang masa", "Tolak rope ke peha guna lats", "Naik perlahan sampai paras kepala"],
+    cues: ["Keep arms almost straight throughout", "Push the rope to your thighs with your lats", "Return slowly to head height"],
   },
 
   // ---------- Shoulder ----------
@@ -305,7 +305,7 @@ export const DEMOS = {
       ],
       feet: FRONT_FEET,
     },
-    cues: ["Dada rapat pad, siku lembut", "Buka tangan ke tepi guna rear delt", "Tahan 1 saat, rapat semula perlahan"],
+    cues: ["Chest on the pad, soft elbows", "Open your arms out with the rear delts", "Hold 1 second, close slowly"],
   },
   "single-arm-rear-delt-ext": {
     label: "Single Arm Rear Delt Extension",
@@ -333,7 +333,7 @@ export const DEMOS = {
       ],
       feet: FRONT_FEET,
     },
-    cues: ["Cable dari sisi bertentangan", "Tarik melintang badan ke luar", "Lengan selari bahu, balik perlahan"],
+    cues: ["Cable from the opposite side", "Pull across your body and out", "Arm level with shoulder, return slowly"],
   },
   "heavy-partial-side-raise": {
     label: "Heavy Partial Side Raises",
@@ -358,7 +358,7 @@ export const DEMOS = {
       ],
       feet: FRONT_FEET,
     },
-    cues: ["DB berat, separuh pergerakan", "Angkat ke tepi ~45° sahaja", "Kawal turun, jangan hayun"],
+    cues: ["Heavy DBs, half range of motion", "Raise out to ~45° only", "Control the way down, no swinging"],
   },
   "single-arm-side-raise": {
     label: "Single Arm Side Raises",
@@ -384,7 +384,7 @@ export const DEMOS = {
       ],
       feet: FRONT_FEET,
     },
-    cues: ["Satu tangan, badan senget sikit", "Angkat melepasi bahu (> 90°)", "Turun perlahan, jangan rehat bawah"],
+    cues: ["One arm, lean slightly away", "Raise past shoulder height (> 90°)", "Lower slowly, don't rest at the bottom"],
   },
   "upright-row-smith": {
     label: "Upright Row Smith Machine",
@@ -413,7 +413,7 @@ export const DEMOS = {
       ],
       feet: FRONT_FEET,
     },
-    cues: ["Grip sederhana rapat", "Tarik bar ke dada, siku lebih tinggi", "Turun perlahan ke peha"],
+    cues: ["Medium-close grip", "Pull the bar to your chest, elbows high", "Lower slowly to your thighs"],
   },
   "shoulder-press-machine": {
     label: "Shoulder Press",
@@ -439,7 +439,7 @@ export const DEMOS = {
       ],
       feet: FRONT_FEET,
     },
-    cues: ["Mula tangan paras telinga", "Tolak ke atas, jangan kunci siku", "Turun perlahan ke paras telinga"],
+    cues: ["Start with hands at ear level", "Press up, don't lock the elbows", "Lower slowly back to ear level"],
   },
 
   // ---------- Legs ----------
@@ -466,7 +466,7 @@ export const DEMOS = {
       ],
       feet: STAND_FEET,
     },
-    cues: ["Kaki selebar bahu", "Turun sampai peha selari lantai", "Tolak guna tumit, dada tegak"],
+    cues: ["Feet shoulder-width apart", "Sit down until thighs are parallel", "Drive through your heels, chest up"],
   },
   "leg-press": {
     label: "Leg Press",
@@ -500,15 +500,15 @@ export const DEMOS = {
       ],
       footAngle: -40,
     },
-    cues: ["Kaki tengah plat, selebar bahu", "Turun sampai lutut ~90°", "Tolak, jangan kunci lutut"],
+    cues: ["Feet mid-platform, shoulder-width", "Lower until knees reach ~90°", "Press up, don't lock your knees"],
   },
   "split-squat-db": {
     ...splitSquat("Split Squat DB", true, 24),
-    cues: ["Satu kaki depan, satu belakang", "Turun rendah, lutut belakang ke lantai", "Tolak guna kaki depan"],
+    cues: ["One foot forward, one back", "Drop low, back knee toward the floor", "Drive up through the front foot"],
   },
   "walking-lunges": {
     ...splitSquat("Walking Lunges", false, 30),
-    cues: ["Langkah panjang ke depan", "Turun sampai lutut belakang hampir lantai", "Tolak & terus melangkah"],
+    cues: ["Take a long step forward", "Lower until the back knee nearly touches", "Push off and keep walking"],
   },
   "calf-raise": {
     label: "Calves Raises",
@@ -540,13 +540,13 @@ export const DEMOS = {
       ],
       footAngle: 60,
     },
-    cues: ["Hujung kaki atas step", "Jengket setinggi boleh", "Tahan, turun sampai tumit regang"],
+    cues: ["Balls of your feet on a step", "Rise onto your toes as high as you can", "Hold, then lower until heels stretch"],
   },
 
   // ---------- Bicep + Forearm ----------
   "hammer-curl-db": {
     ...standingCurl("dbSide", "Hammer Curl DB", -80),
-    cues: ["Pegang DB menegak (neutral grip)", "Siku rapat badan, curl ke bahu", "Tahan & squeeze, turun perlahan"],
+    cues: ["Hold the DBs upright (neutral grip)", "Elbows at your sides, curl to shoulder", "Hold & squeeze, lower slowly"],
   },
   "spider-curl-ez": {
     label: "Spider Curl EZ Bar",
@@ -577,7 +577,7 @@ export const DEMOS = {
         [36, 110],
       ],
     },
-    cues: ["Dada atas bench condong", "Lengan tergantung lurus ke bawah", "Curl ke atas, squeeze di puncak"],
+    cues: ["Chest on an incline bench", "Arms hang straight down", "Curl up, squeeze at the top"],
   },
   "preacher-curl-db": {
     label: "Preacher Curl Single Arm DB",
@@ -610,15 +610,15 @@ export const DEMOS = {
         [82, 110],
       ],
     },
-    cues: ["Lengan rapat atas pad", "Curl ke atas, siku kekal di pad", "Turun perlahan hampir lurus"],
+    cues: ["Upper arm flat on the pad", "Curl up, elbow stays on the pad", "Lower slowly to almost straight"],
   },
   "reverse-curl-barbell": {
     ...standingCurl("barSide", "Reverse Curl Barbell"),
-    cues: ["Grip overhand (tapak tangan ke bawah)", "Siku rapat, curl ke dada", "Turun perlahan, kawal pergelangan"],
+    cues: ["Overhand grip (palms down)", "Elbows tight, curl to your chest", "Lower slowly, control your wrists"],
   },
   "close-grip-curl-bar": {
     ...standingCurl("barSide", "Close Grip Bicep Curl"),
-    cues: ["Grip underhand, tangan rapat", "Curl ke dada tanpa hayun badan", "Squeeze, turun perlahan"],
+    cues: ["Underhand grip, hands close", "Curl to your chest without swinging", "Squeeze, lower slowly"],
   },
   "forearm-curl-cable": {
     label: "Forearm Curl Cable",
@@ -651,17 +651,17 @@ export const DEMOS = {
         [88, 110],
       ],
     },
-    cues: ["Lengan bawah rehat atas peha", "Gerak pergelangan sahaja ke atas", "Turun perlahan, regang penuh"],
+    cues: ["Forearms resting on your thighs", "Curl only at the wrist", "Lower slowly to a full stretch"],
   },
 
   // ---------- Tricep ----------
   "single-arm-pushdown": {
     ...pushdown("handle", "Single Arm Push Down"),
-    cues: ["Satu tangan, siku rapat ke sisi", "Tolak ke bawah sampai lurus", "Squeeze tricep, naik perlahan"],
+    cues: ["One arm, elbow pinned to your side", "Push down until your arm is straight", "Squeeze the tricep, rise slowly"],
   },
   "rope-pushdown": {
     ...pushdown("handle", "Rope Push Down Cable"),
-    cues: ["Siku kunci di sisi badan", "Tolak ke bawah, buka rope di bawah", "Naik perlahan sampai paras dada"],
+    cues: ["Elbows locked at your sides", "Push down, spread the rope at the bottom", "Rise slowly to chest height"],
   },
   "ohd-tricep-ext": {
     label: "Tricep DB Extension",
@@ -686,7 +686,7 @@ export const DEMOS = {
       ],
       feet: STAND_FEET,
     },
-    cues: ["DB atas kepala, siku tunjuk ke atas", "Turun DB ke belakang kepala", "Luruskan lengan, siku tak kembang"],
+    cues: ["DB overhead, elbows pointing up", "Lower the DB behind your head", "Straighten your arms, elbows don't flare"],
   },
   "skull-crusher": {
     label: "Skull Crusher",
@@ -724,7 +724,7 @@ export const DEMOS = {
         [20, 110],
       ],
     },
-    cues: ["Baring, lengan tegak ke atas", "Bengkok siku, bar ke dahi", "Luruskan semula, siku tetap"],
+    cues: ["Lie back, arms straight up", "Bend at the elbows, bar to your forehead", "Straighten again, elbows fixed"],
   },
   "db-kickback": {
     label: "DB Tricep Kick Back",
@@ -760,7 +760,7 @@ export const DEMOS = {
         [56, 110],
       ],
     },
-    cues: ["Bongkok, lengan atas selari badan", "Luruskan lengan ke belakang", "Squeeze, siku tak bergerak"],
+    cues: ["Hinge over, upper arm along your body", "Extend your arm straight back", "Squeeze, elbow doesn't move"],
   },
   dips: {
     label: "Dips",
@@ -795,6 +795,6 @@ export const DEMOS = {
         [50, 100],
       ],
     },
-    cues: ["Badan tegak (fokus tricep)", "Turun sampai siku ~90°", "Tolak naik, siku rapat ke belakang"],
+    cues: ["Stay upright (tricep focus)", "Lower until elbows reach ~90°", "Press up, elbows tight and back"],
   },
 };

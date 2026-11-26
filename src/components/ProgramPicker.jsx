@@ -3,8 +3,8 @@ import { IconCheck } from "./icons";
 import { PROGRAM_LIST, PROGRAMS, REST, VOLUME_LABEL } from "../data/exercises";
 
 // Bottom sheet to choose what to train today: any program from the library,
-// or a rest day. The weekday's scheduled default is marked, and "Ikut jadual"
-// clears a swap.
+// or a rest day. The weekday's scheduled default is marked "Scheduled";
+// picking it clears a swap.
 export default function ProgramPicker({ dayInfo, onPick, onClose }) {
   const current = dayInfo.programId ?? REST;
   const defaultId = dayInfo.defaultProgramId ?? REST;
@@ -21,14 +21,14 @@ export default function ProgramPicker({ dayInfo, onPick, onClose }) {
       title: p.focus,
       meta: `${p.exercises.length} exercises · ${VOLUME_LABEL} · Rest ${p.rest}`,
     })),
-    { id: REST, title: "Rest day", meta: "Tak workout hari ni" },
+    { id: REST, title: "Rest day", meta: "No workout today" },
   ];
 
   return (
-    <Sheet title="Pilih workout hari ni" onClose={onClose}>
+    <Sheet title="Choose today's workout" onClose={onClose}>
       <p className="picker-hint">
-        Jadual {dayInfo.label}: <strong>{defaultId === REST ? "Rest" : PROGRAMS[defaultId].focus}</strong>. Pilih
-        program lain kalau nak tukar untuk hari ni sahaja.
+        {dayInfo.label}'s schedule: <strong>{defaultId === REST ? "Rest" : PROGRAMS[defaultId].focus}</strong>.
+        Pick another program to swap it for today only.
       </p>
       <div className="picker-list">
         {options.map((o) => {
@@ -42,7 +42,7 @@ export default function ProgramPicker({ dayInfo, onPick, onClose }) {
               <span className="picker-option-text">
                 <span className="picker-option-title">
                   {o.title}
-                  {o.id === defaultId && <span className="picker-badge">Jadual</span>}
+                  {o.id === defaultId && <span className="picker-badge">Scheduled</span>}
                 </span>
                 <span className="picker-option-meta">{o.meta}</span>
               </span>

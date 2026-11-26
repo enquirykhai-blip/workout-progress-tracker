@@ -8,16 +8,16 @@ via Firebase (Firestore + email/password auth) when signed in.
 
 | Day | Focus | Rest |
 |---|---|---|
-| Selasa | Back | 2–3 mins |
-| Rabu | Shoulder | 2–3 mins |
-| Jumaat | Bicep + Forearm | 2–3 mins |
-| Sabtu | Tricep | 2–3 mins |
-| Ahad / Isnin / Khamis | Rest | — |
+| Tuesday | Back | 2–3 mins |
+| Wednesday | Shoulder | 2–3 mins |
+| Friday | Bicep + Forearm | 2–3 mins |
+| Saturday | Tricep | 2–3 mins |
+| Sunday / Monday / Thursday | Rest | — |
 
 **Legs** (3–4 mins rest) stays in the program library but isn't on the
-default schedule. On any day, **Tukar** (or **Nak workout?** on a rest day)
+default schedule. On any day, **Swap** (or **Train anyway?** on a rest day)
 opens a picker to run any program — Back, Shoulder, Legs, Bicep + Forearm,
-Tricep — or make it a rest day, for that date only. Swaps show as "Ditukar"
+Tricep — or make it a rest day, for that date only. Swaps show as "Swapped"
 on Today and in the Week schedule; picking the weekday's own default clears
 the swap.
 
@@ -91,34 +91,36 @@ an afterthought, alongside the workout split.
 - **Weekly Overview** — a 7-day schedule showing which workout days were
   completed vs missed, with prev/next week navigation.
 - **How-to demos** — every exercise has an animated stick-figure demo (in
-  the app's black-and-white style) beside 3 short "Cara buat" steps, shown at
+  the app's black-and-white style) beside 3 short "How to" steps, shown at
   the top of the open exercise. The loop follows the plan's tempo: lift,
-  hold & squeeze, slower return. Close it with ✕ (remembered); "Cara buat"
+  hold & squeeze, slower return. Close it with ✕ (remembered); "How to"
   brings it back. Poses live in `src/data/demos.js` and are drawn by
   `src/components/ExerciseDemo.jsx` with two-bone IK, so no image files are
   needed and it works offline.
-- **Mod Fokus (whole-workout flow)** — "▶ Mod Fokus" on the Today hero
+- **Focus Mode (whole-workout flow)** — "▶ Focus Mode" on the Today hero
   runs the entire workout in one full-screen flow: set 1 is counted by the
-  Rep Coach and saved on its own a few seconds after "Siap!", then rest
-  (ring countdown, "Rehat. Seterusnya, …", a "10 seconds" call), then the
+  Rep Coach and saved on its own a few seconds after "Done!", then rest
+  (ring countdown, "Rest. Next up, …", a "Ten seconds" call), then the
   next set starts by itself with a 3-2-1 — through every set and exercise
   to a "Workout complete" summary. The weight is suggested from today's or
   the last session's log, carried set to set, and adjustable with −/+ while
-  resting. Skip an exercise, add/cut rest, start early, or turn off "Auto
-  mula" to confirm each set. Every set is logged as it finishes, so leaving
-  halfway and reopening resumes where you stopped. The screen stays awake.
-- **Rep Coach (hands-free rep counting)** — "Mula set N" in the open
-  exercise opens a full-screen counter: "Sedia… tiga, dua, satu, Mula!",
-  then every rep is paced on the tempo (Angkat → Tahan & squeeze → Turun)
-  with a tick at each phase, and the voice calls every phase too ("angkat…
-  tahan, squeeze… turun… dua, angkat…", toggle "Sebut fasa" for numbers
-  only);
-  "Dua lagi!" two from the end and "Siap!" at the target. Tempo: hold 4s
+  resting. Skip an exercise, add/cut rest, start early, or turn off
+  "Auto-start" to confirm each set. Every set is logged as it finishes, so
+  leaving halfway and reopening resumes where you stopped. The screen stays
+  awake.
+- **Rep Coach (hands-free rep counting)** — "Start set N" in the open
+  exercise opens a full-screen counter: "Ready… 3, 2, 1, Go. Lift!", then
+  every rep is paced on the tempo (Lift → Hold & squeeze → Lower) with a
+  tick at each phase, and the voice calls every phase ("lift… hold,
+  squeeze… lower… 2, lift…"; turn off "Call out phases" for numbers only),
+  "Two more!" two from the end and "Done!" at the target. Tempo: hold 4s
   (plan), hold 2s, or no hold. Pause, Stop (keeps the count so far), −1/+1
-  to correct, and "+ Teruskan" to keep counting past the target to
-  failure. Finishing fills REPS — and if KG is filled it logs the set,
-  which opens the rest timer. Speaks Malay when the phone has a Malay voice
-  (English otherwise), works offline, and keeps the screen awake.
+  to correct, and "+ Keep going" to count past the target to failure.
+  Finishing fills REPS — and if KG is filled it logs the set, which opens
+  the rest timer. The voice is English and prefers a male system voice
+  (e.g. Daniel / Aaron on iPhone, "Google UK English Male" / David
+  elsewhere), falling back to a lower-pitched English voice; works offline
+  and keeps the screen awake.
 - **Focus rest timer** — logging a set opens one full-screen timer: a big
   ring countdown, the exercise name, "Next up" (the next set, or the next
   exercise), and −15s / Skip rest / +15s. Minimise it to a floating pill

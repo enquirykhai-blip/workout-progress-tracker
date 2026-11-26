@@ -80,7 +80,7 @@ export default function Weekly({ sessions, dayOverrides = {} }) {
                 <div className="schedule-focus">{dayInfo.type === "rest" ? "Rest" : dayInfo.focus}</div>
                 {(dayInfo.type !== "rest" || dayInfo.overridden) && (
                   <div className="schedule-meta">
-                    {dayInfo.overridden ? "Ditukar" : ""}
+                    {dayInfo.overridden ? "Swapped" : ""}
                     {dayInfo.overridden && dayInfo.type !== "rest" ? " · " : ""}
                     {dayInfo.type !== "rest" ? `Rest ${dayInfo.rest}` : ""}
                   </div>

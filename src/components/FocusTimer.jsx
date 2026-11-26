@@ -16,7 +16,7 @@ export default function FocusTimer({ timer, remaining, minimized, onMinimize, on
 
   if (minimized && !timer.finished) {
     return (
-      <button className="focus-pill" onClick={onExpand} aria-label="Buka timer rest">
+      <button className="focus-pill" onClick={onExpand} aria-label="Open rest timer">
         <IconTimer width={16} height={16} />
         <span className="focus-pill-time">{formatClock(remaining)}</span>
         <span className="focus-pill-label">Rest</span>
@@ -31,10 +31,10 @@ export default function FocusTimer({ timer, remaining, minimized, onMinimize, on
   return (
     <div className={`focus-timer${timer.finished ? " is-go" : ""}`} role="dialog" aria-label="Rest timer">
       <div className="focus-top">
-        <button className="focus-icon-btn" onClick={onMinimize} aria-label="Kecilkan timer" disabled={timer.finished}>
+        <button className="focus-icon-btn" onClick={onMinimize} aria-label="Minimise timer" disabled={timer.finished}>
           <IconChevronLeft style={{ transform: "rotate(-90deg)" }} />
         </button>
-        <div className="focus-eyebrow">{timer.finished ? "Rest habis" : "Rest"}</div>
+        <div className="focus-eyebrow">{timer.finished ? "Rest over" : "Rest"}</div>
         <span className="focus-icon-btn ghost" />
       </div>
 
@@ -78,13 +78,13 @@ export default function FocusTimer({ timer, remaining, minimized, onMinimize, on
 
       {!timer.finished && (
         <div className="focus-controls">
-          <button className="focus-adjust" onClick={() => onAdjust(-15)} aria-label="Kurang 15 saat">
+          <button className="focus-adjust" onClick={() => onAdjust(-15)} aria-label="Minus 15 seconds">
             −15s
           </button>
           <button className="focus-skip" onClick={onSkip}>
             Skip rest
           </button>
-          <button className="focus-adjust" onClick={() => onAdjust(15)} aria-label="Tambah 15 saat">
+          <button className="focus-adjust" onClick={() => onAdjust(15)} aria-label="Plus 15 seconds">
             +15s
           </button>
         </div>
