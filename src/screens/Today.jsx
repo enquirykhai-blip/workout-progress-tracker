@@ -1,16 +1,14 @@
-import { useState } from "react";
-import { PROGRAM, EXERCISE_MAP, defaultTargetFor } from "../data/exercises";
+import { PROGRAM, EXERCISE_MAP, GUIDELINE } from "../data/exercises";
 import { todayISO, formatDisplayDate, dayInfoForDate } from "../utils/date";
 import { findSession } from "../utils/sessionOps";
 import ExerciseLogCard from "../components/ExerciseLogCard";
-import FridayPicker from "../components/FridayPicker";
-import { IconPlus } from "../components/icons";
+import { useLocalStorageState } from "../hooks/useLocalStorageState";
+import { STORAGE_KEYS } from "../utils/storage";
 
-export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, fridayPicks, onSaveFridayPicks, onGoToNutrition }) {
-  const [pickerOpen, setPickerOpen] = useState(false);
+export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, onGoToNutrition }) {
   const date = todayISO();
   const dayInfo = dayInfoForDate(new Date());
-  const picksForToday = fridayPicks[date] || [];
+  const [guideOpen, setGuideOpen] = useLocalStorageState(STORAGE_KEYS.GUIDE_OPEN, true);
 
   const items =
     dayInfo.type === "workout"
@@ -18,8 +16,6 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           exercise: EXERCISE_MAP[entry.exerciseId],
           target: entry,
         }))
-      : dayInfo.type === "custom"
-      ? picksForToday.map((id) => ({ exercise: EXERCISE_MAP[id], target: defaultTargetFor(id) }))
       : [];
 
   const isExerciseDone = (exercise, target) => {
@@ -54,24 +50,46 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
         </div>
       )}
 
-      {dayInfo.type === "custom" && (
-        <>
-          <button className="btn btn-secondary btn-block" onClick={() => setPickerOpen(true)} style={{ marginBottom: 16 }}>
-            <IconPlus width={16} height={16} />
-            {picksForToday.length ? "Edit Today's Exercises" : "Pick Today's Exercises"}
-          </button>
-          {items.length === 0 && (
-            <div className="empty-state">
-              <div className="icon">🎯</div>
-              <p>Choose 5-6 exercises for your weak points today.</p>
+      {dayInfo.type === "workout" && (
+        <div className="card plan-card">
+          <div className="plan-meta">
+            <div>
+              <div className="plan-label">Key Focus</div>
+              <ul className="plan-focus">
+                {dayInfo.keyFocus.map((f) => (
+                  <li key={f}>{f}</li>
+                ))}
+              </ul>
             </div>
+            <div className="plan-rest">
+              <div className="plan-label">Rest</div>
+              <div className="plan-rest-value">{dayInfo.rest}</div>
+            </div>
+          </div>
+
+          <button className="plan-guide-toggle" onClick={() => setGuideOpen((v) => !v)}>
+            {guideOpen ? "Hide" : "Show"} gym guideline
+          </button>
+          {guideOpen && (
+            <ol className="plan-guide">
+              {GUIDELINE.map((g, i) => (
+                <li key={g.title}>
+                  <span className="plan-guide-num">{String(i + 1).padStart(2, "0")}</span>
+                  <div>
+                    <div className="plan-guide-title">{g.title}</div>
+                    <div className="plan-guide-body">{g.body}</div>
+                  </div>
+                </li>
+              ))}
+            </ol>
           )}
-        </>
+        </div>
       )}
 
-      {items.map(({ exercise, target }) => (
+      {items.map(({ exercise, target }, i) => (
         <ExerciseLogCard
           key={`${exercise.id}-${date}`}
+          index={i + 1}
           exercise={exercise}
           target={target}
           date={date}
@@ -83,14 +101,6 @@ export default function Today({ sessions, onLogSet, onDeleteSet, onNotesChange, 
           onNotesChange={(notes) => onNotesChange(exercise, dayInfo.key, notes)}
         />
       ))}
-
-      {pickerOpen && (
-        <FridayPicker
-          initialPicks={picksForToday}
-          onClose={() => setPickerOpen(false)}
-          onSave={(picks) => onSaveFridayPicks(date, picks)}
-        />
-      )}
     </div>
   );
 }

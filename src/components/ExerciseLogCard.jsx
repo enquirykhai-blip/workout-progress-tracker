@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { IconCheck, IconPlus, IconClose } from "./icons";
 import { findSession, getBestSet, getBestRepsOnlySet } from "../utils/sessionOps";
+import { WARMUP_SETS } from "../data/exercises";
 
 function buildInitialRows({ exercise, target, date, day, sessions }) {
   const existing = findSession(sessions, date, exercise.id);
@@ -42,7 +43,7 @@ function matchesSaved(row) {
   return savedWeightStr === row.weight && savedRepsStr === row.reps;
 }
 
-export default function ExerciseLogCard({ exercise, target, date, day, sessions, done, onLogSet, onDeleteSet, onNotesChange }) {
+export default function ExerciseLogCard({ index, exercise, target, date, day, sessions, done, onLogSet, onDeleteSet, onNotesChange }) {
   const [rows, setRows] = useState(() => buildInitialRows({ exercise, target, date, day, sessions }));
   const existing = findSession(sessions, date, exercise.id);
   const [noteOpen, setNoteOpen] = useState(Boolean(existing?.notes));
@@ -101,6 +102,7 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
       <div className="exercise-card-head">
         <div>
           <div className="exercise-name">
+            {index != null && <span className="exercise-index">{String(index).padStart(2, "0")}</span>}
             {exercise.name}
             {done && (
               <span className="exercise-done-badge">
@@ -110,6 +112,8 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
           </div>
           <div className="exercise-target">
             {target.sets} × {target.repRange}
+            {exercise.target && <span className="exercise-tag">{exercise.target}</span>}
+            {exercise.kind && <span className="exercise-tag outline">{exercise.kind}</span>}
           </div>
         </div>
         {best ? (
@@ -126,7 +130,11 @@ export default function ExerciseLogCard({ exercise, target, date, day, sessions,
           const isSaved = matchesSaved(row);
           return (
             <div className={`set-row${row.saved ? " has-delete" : ""}`} key={row.setNumber}>
-              <div className="set-index">{row.setNumber}</div>
+              {row.setNumber <= WARMUP_SETS ? (
+                <div className="set-index warmup" title="Warm-up set">W</div>
+              ) : (
+                <div className="set-index">{row.setNumber}</div>
+              )}
               <div className="set-field">
                 <input
                   type="text"

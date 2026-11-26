@@ -6,6 +6,7 @@ import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
+import { DAY_BY_KEY } from "./data/exercises";
 import BottomNav from "./components/BottomNav";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
@@ -26,7 +27,6 @@ export default function App() {
 function WorkoutApp({ uid, email, onSignOut }) {
   const [tab, setTab] = useState("today");
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
-  const [fridayPicks, setFridayPicks] = useCloudState(STORAGE_KEYS.FRIDAY_PICKS, "fridayPicks", {}, uid);
   const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
   const [nutritionTargets, setNutritionTargets] = useCloudState(
     STORAGE_KEYS.NUTRITION_TARGETS,
@@ -55,7 +55,9 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
-      restTimer.start(restTimer.defaultDuration);
+      const duration =
+        restTimer.defaultDuration === "auto" ? DAY_BY_KEY[day]?.restSeconds ?? 120 : restTimer.defaultDuration;
+      restTimer.start(duration);
       return wasPR;
     },
     [sessions, setSessions, showToast, restTimer]
@@ -78,13 +80,6 @@ function WorkoutApp({ uid, email, onSignOut }) {
       setSessions((prev) => updateNotes(prev, todayISO(), exercise.id, day, notes));
     },
     [setSessions]
-  );
-
-  const handleSaveFridayPicks = useCallback(
-    (date, picks) => {
-      setFridayPicks((prev) => ({ ...prev, [date]: picks }));
-    },
-    [setFridayPicks]
   );
 
   const handleAddNutritionEntry = useCallback(
@@ -119,7 +114,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
                 className={`chip${restTimer.defaultDuration === secs ? " active" : ""}`}
                 onClick={() => restTimer.setDefaultDuration(secs)}
               >
-                {secs}s
+                {secs === "auto" ? "Auto" : `${secs}s`}
               </button>
             ))}
           </div>
@@ -135,8 +130,6 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onLogSet={handleLogSet}
           onDeleteSet={handleDeleteSet}
           onNotesChange={handleNotesChange}
-          fridayPicks={fridayPicks}
-          onSaveFridayPicks={handleSaveFridayPicks}
           onGoToNutrition={() => setTab("nutrition")}
         />
       )}

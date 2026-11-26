@@ -1,7 +1,9 @@
 export const STORAGE_KEYS = {
   SESSIONS: "wpt.sessions.v1",
-  FRIDAY_PICKS: "wpt.fridayPicks.v1",
-  REST_DURATION: "wpt.restDuration.v1",
+  // v2: default is now "auto" (rest length follows the day's plan), so older
+  // saved fixed durations don't silently override it.
+  REST_DURATION: "wpt.restDuration.v2",
+  GUIDE_OPEN: "wpt.guideOpen.v1",
   NUTRITION: "wpt.nutrition.v1",
   NUTRITION_TARGETS: "wpt.nutritionTargets.v1",
 };
