@@ -22,6 +22,15 @@ focus, rest range, and this gym guideline; each exercise is tagged with the
 muscle it targets and whether it's compound or isolation. The full program
 lives in `src/data/exercises.js`.
 
+## Look & Feel
+
+Light, soft-card UI: a pale grey background with white rounded cards and
+soft shadows, black pill buttons, and a floating white pill bottom nav. The
+Today tab opens like a home screen — a "Welcome back" greeting (name is
+editable in the settings menu, top right), a dark hero card for the day's
+focus that jumps to the next unfinished exercise, Key Focus / Rest tiles, an
+Overall Progress ring, the collapsible gym guideline, then the exercises.
+
 ## Features
 
 The app has three tabs: **Today** (workout), **Week** (a 7-day overview), and

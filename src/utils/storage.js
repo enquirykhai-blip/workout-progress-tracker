@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
   // saved fixed durations don't silently override it.
   REST_DURATION: "wpt.restDuration.v2",
   GUIDE_OPEN: "wpt.guideOpen.v1",
+  DISPLAY_NAME: "wpt.displayName.v1",
   NUTRITION: "wpt.nutrition.v1",
   NUTRITION_TARGETS: "wpt.nutritionTargets.v1",
 };

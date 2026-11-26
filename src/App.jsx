@@ -7,6 +7,8 @@ import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/se
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
 import { DAY_BY_KEY } from "./data/exercises";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
+import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
@@ -37,6 +39,8 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const restTimer = useRestTimer();
+  const fallbackName = (email || "").split("@")[0];
+  const [displayName, setDisplayName] = useLocalStorageState(STORAGE_KEYS.DISPLAY_NAME, "");
 
   const showToast = useCallback((message) => {
     const id = makeId();
@@ -101,11 +105,19 @@ function WorkoutApp({ uid, email, onSignOut }) {
       <PRToastLayer toasts={toasts} />
 
       <button className="account-fab" onClick={() => setAccountOpen((v) => !v)} aria-label="Account">
-        {email?.[0]?.toUpperCase() || "?"}
+        <IconSettings />
       </button>
       {accountOpen && (
         <div className="account-popover">
           <div className="account-email">{email}</div>
+          <div className="account-section-label">Name</div>
+          <input
+            className="account-name-input"
+            type="text"
+            placeholder={fallbackName}
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
           <div className="account-section-label">Rest Timer</div>
           <div className="chip-row" style={{ marginBottom: 14 }}>
             {restTimer.presets.map((secs) => (
@@ -131,6 +143,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onDeleteSet={handleDeleteSet}
           onNotesChange={handleNotesChange}
           onGoToNutrition={() => setTab("nutrition")}
+          displayName={displayName.trim() || fallbackName}
         />
       )}
       {tab === "week" && <Weekly sessions={sessions} />}
