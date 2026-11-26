@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   REP_TEMPO: "wpt.repTempo.v1",
   REP_VOICE: "wpt.repVoice.v1",
   REP_PHASE_CUES: "wpt.repPhaseCues.v1",
+  FOCUS_AUTO_NEXT: "wpt.focusAutoNext.v1",
   DISPLAY_NAME: "wpt.displayName.v1",
   NUTRITION: "wpt.nutrition.v1",
   NUTRITION_TARGETS: "wpt.nutritionTargets.v1",

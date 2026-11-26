@@ -97,6 +97,16 @@ an afterthought, alongside the workout split.
   brings it back. Poses live in `src/data/demos.js` and are drawn by
   `src/components/ExerciseDemo.jsx` with two-bone IK, so no image files are
   needed and it works offline.
+- **Mod Fokus (whole-workout flow)** — "▶ Mod Fokus" on the Today hero
+  runs the entire workout in one full-screen flow: set 1 is counted by the
+  Rep Coach and saved on its own a few seconds after "Siap!", then rest
+  (ring countdown, "Rehat. Seterusnya, …", a "10 seconds" call), then the
+  next set starts by itself with a 3-2-1 — through every set and exercise
+  to a "Workout complete" summary. The weight is suggested from today's or
+  the last session's log, carried set to set, and adjustable with −/+ while
+  resting. Skip an exercise, add/cut rest, start early, or turn off "Auto
+  mula" to confirm each set. Every set is logged as it finishes, so leaving
+  halfway and reopening resumes where you stopped. The screen stays awake.
 - **Rep Coach (hands-free rep counting)** — "Mula set N" in the open
   exercise opens a full-screen counter: "Sedia… tiga, dua, satu, Mula!",
   then every rep is paced on the tempo (Angkat → Tahan & squeeze → Turun)
