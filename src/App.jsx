@@ -6,6 +6,9 @@ import { STORAGE_KEYS } from "./utils/storage";
 import { upsertSet, updateNotes, isPR, findSession, removeSet } from "./utils/sessionOps";
 import { makeId } from "./utils/id";
 import { todayISO } from "./utils/date";
+import { DAY_BY_KEY } from "./data/exercises";
+import { useLocalStorageState } from "./hooks/useLocalStorageState";
+import { IconSettings } from "./components/icons";
 import BottomNav from "./components/BottomNav";
 import PRToastLayer from "./components/PRToastLayer";
 import AuthScreen from "./components/AuthScreen";
@@ -26,7 +29,6 @@ export default function App() {
 function WorkoutApp({ uid, email, onSignOut }) {
   const [tab, setTab] = useState("today");
   const [sessions, setSessions] = useCloudState(STORAGE_KEYS.SESSIONS, "sessions", [], uid);
-  const [fridayPicks, setFridayPicks] = useCloudState(STORAGE_KEYS.FRIDAY_PICKS, "fridayPicks", {}, uid);
   const [nutrition, setNutrition] = useCloudState(STORAGE_KEYS.NUTRITION, "nutrition", [], uid);
   const [nutritionTargets, setNutritionTargets] = useCloudState(
     STORAGE_KEYS.NUTRITION_TARGETS,
@@ -37,6 +39,8 @@ function WorkoutApp({ uid, email, onSignOut }) {
   const [toasts, setToasts] = useState([]);
   const [accountOpen, setAccountOpen] = useState(false);
   const restTimer = useRestTimer();
+  const fallbackName = (email || "").split("@")[0];
+  const [displayName, setDisplayName] = useLocalStorageState(STORAGE_KEYS.DISPLAY_NAME, "");
 
   const showToast = useCallback((message) => {
     const id = makeId();
@@ -55,7 +59,9 @@ function WorkoutApp({ uid, email, onSignOut }) {
         const detail = weight != null ? `${weight}kg${reps ? ` × ${reps}` : ""}` : `${reps} reps`;
         showToast(`New PR — ${exercise.name}: ${detail}`);
       }
-      restTimer.start(restTimer.defaultDuration);
+      const duration =
+        restTimer.defaultDuration === "auto" ? DAY_BY_KEY[day]?.restSeconds ?? 120 : restTimer.defaultDuration;
+      restTimer.start(duration);
       return wasPR;
     },
     [sessions, setSessions, showToast, restTimer]
@@ -80,13 +86,6 @@ function WorkoutApp({ uid, email, onSignOut }) {
     [setSessions]
   );
 
-  const handleSaveFridayPicks = useCallback(
-    (date, picks) => {
-      setFridayPicks((prev) => ({ ...prev, [date]: picks }));
-    },
-    [setFridayPicks]
-  );
-
   const handleAddNutritionEntry = useCallback(
     (entry) => {
       setNutrition((prev) => [...prev, entry]);
@@ -106,11 +105,19 @@ function WorkoutApp({ uid, email, onSignOut }) {
       <PRToastLayer toasts={toasts} />
 
       <button className="account-fab" onClick={() => setAccountOpen((v) => !v)} aria-label="Account">
-        {email?.[0]?.toUpperCase() || "?"}
+        <IconSettings />
       </button>
       {accountOpen && (
         <div className="account-popover">
           <div className="account-email">{email}</div>
+          <div className="account-section-label">Name</div>
+          <input
+            className="account-name-input"
+            type="text"
+            placeholder={fallbackName}
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+          />
           <div className="account-section-label">Rest Timer</div>
           <div className="chip-row" style={{ marginBottom: 14 }}>
             {restTimer.presets.map((secs) => (
@@ -119,7 +126,7 @@ function WorkoutApp({ uid, email, onSignOut }) {
                 className={`chip${restTimer.defaultDuration === secs ? " active" : ""}`}
                 onClick={() => restTimer.setDefaultDuration(secs)}
               >
-                {secs}s
+                {secs === "auto" ? "Auto" : `${secs}s`}
               </button>
             ))}
           </div>
@@ -135,9 +142,8 @@ function WorkoutApp({ uid, email, onSignOut }) {
           onLogSet={handleLogSet}
           onDeleteSet={handleDeleteSet}
           onNotesChange={handleNotesChange}
-          fridayPicks={fridayPicks}
-          onSaveFridayPicks={handleSaveFridayPicks}
           onGoToNutrition={() => setTab("nutrition")}
+          displayName={displayName.trim() || fallbackName}
         />
       )}
       {tab === "week" && <Weekly sessions={sessions} />}

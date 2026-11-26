@@ -100,3 +100,21 @@ export function IconCamera(props) {
     </svg>
   );
 }
+
+export function IconSettings(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M4 7h10M18 7h2M4 17h4M12 17h8" />
+      <circle cx="16" cy="7" r="2" />
+      <circle cx="10" cy="17" r="2" />
+    </svg>
+  );
+}
+
+export function IconArrowRight(props) {
+  return (
+    <svg {...common} {...props}>
+      <path d="M5 12h14M13 6l6 6-6 6" />
+    </svg>
+  );
+}

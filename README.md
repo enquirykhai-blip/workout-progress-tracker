@@ -6,14 +6,30 @@ via Firebase (Firestore + email/password auth) when signed in.
 
 ## The Split
 
-| Day | Focus |
-|---|---|
-| Isnin | Chest & Triceps |
-| Selasa | Back & Biceps |
-| Rabu | Arms Focus (Biceps & Triceps) |
-| Khamis | Shoulders & Core |
-| Jumaat | Full Body (weak points — pick your own 5-6 exercises) |
-| Sabtu / Ahad | Rest |
+| Day | Focus | Rest |
+|---|---|---|
+| Selasa | Back | 2–3 mins |
+| Rabu | Shoulder | 2–3 mins |
+| Khamis | Legs | 3–4 mins |
+| Jumaat | Bicep + Forearm | 2–3 mins |
+| Sabtu | Tricep | 2–3 mins |
+| Ahad / Isnin | Rest | — |
+
+Every exercise is 4 sets × 15 reps: set 1 is a light warm-up (shown as "W"),
+sets 2–4 are working sets taken to failure, with a slow tempo (hold and
+squeeze 4 seconds before the next rep). Each day's screen shows its key
+focus, rest range, and this gym guideline; each exercise is tagged with the
+muscle it targets and whether it's compound or isolation. The full program
+lives in `src/data/exercises.js`.
+
+## Look & Feel
+
+Light, soft-card UI: a pale grey background with white rounded cards and
+soft shadows, black pill buttons, and a floating white pill bottom nav. The
+Today tab opens like a home screen — a "Welcome back" greeting (name is
+editable in the settings menu, top right), a dark hero card for the day's
+focus that jumps to the next unfinished exercise, Key Focus / Rest tiles, an
+Overall Progress ring, the collapsible gym guideline, then the exercises.
 
 ## Features
 
@@ -32,10 +48,9 @@ an afterthought, alongside the workout split.
   and the exercise card shows your current best inline.
 - **Weekly Overview** — a 7-day grid showing which workout days were completed
   vs missed this week, with prev/next week navigation.
-- **Jumaat Custom Picker** — a searchable sheet to choose which exercises make
-  up Friday's full-body session, editable any time that day.
-- **Rest Timer** — auto-starts after logging any set (default 90s, configurable
-  in the account menu), with a floating bar showing the countdown, ±15s
+- **Rest Timer** — auto-starts after logging any set. Default is "Auto",
+  which follows the day's plan (2 min, or 3 min on leg day); a fixed
+  60–240s can be picked instead in the account menu. Shown with a floating bar showing the countdown, ±15s
   adjustment, and a skip button.
 - **Install as an app** — installable on your phone's home screen (PWA), works
   offline for the app shell once visited.
@@ -67,12 +82,11 @@ Everything is stored in `localStorage` under the `wpt.*` keys, so the app works
 fully offline:
 
 - `wpt.sessions.v1` — logged sets per exercise/date
-- `wpt.fridayPicks.v1` — chosen exercises per Jumaat date
 - `wpt.nutrition.v1` — logged calorie/protein entries
 - `wpt.nutritionTargets.v1` — daily calorie/protein goals
 
 Signing in (email/password, via Firebase Auth) also syncs each of these to
-Firestore under `users/{uid}/data/{sessions,fridayPicks,nutrition,nutritionTargets}`,
+Firestore under `users/{uid}/data/{sessions,nutrition,nutritionTargets}`,
 so the same account sees the same data on any device. Recommended Firestore
 security rules (Firestore console → Rules):
 
@@ -126,10 +140,11 @@ Built with the modular Firebase JS SDK (v9+):
 
 `src/hooks/useRestTimer.js` drives a countdown off an absolute end timestamp
 (not a decrementing counter), so it stays accurate even if the tab is
-backgrounded. `App.jsx` starts it (using the saved default duration) every
-time a set is logged, regardless of whether it was a PR. The default duration
-(60/90/120/180s) is a per-device preference stored in `localStorage` under
-`wpt.restDuration.v1` — deliberately not synced to Firestore, since it's a
+backgrounded. `App.jsx` starts it every time a set is logged, regardless of
+whether it was a PR. The duration is "Auto" by default (the day's
+`restSeconds` from `src/data/exercises.js`) or a fixed 60/90/120/180/240s —
+a per-device preference stored in `localStorage` under
+`wpt.restDuration.v2` — deliberately not synced to Firestore, since it's a
 device/UI setting rather than workout data. `src/components/RestTimerBar.jsx`
 renders the floating bar with ±15s adjustment and skip.
 

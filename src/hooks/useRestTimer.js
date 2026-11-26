@@ -2,12 +2,13 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocalStorageState } from "./useLocalStorageState";
 import { STORAGE_KEYS } from "../utils/storage";
 
-const DURATION_PRESETS = [60, 90, 120, 180];
+// "auto" = use the current day's planned rest (see DAYS in data/exercises).
+const DURATION_PRESETS = ["auto", 60, 90, 120, 180, 240];
 
 // Countdown is driven off an absolute end timestamp (not a decrementing
 // counter) so it stays accurate even if the tab is backgrounded/throttled.
 export function useRestTimer() {
-  const [defaultDuration, setDefaultDuration] = useLocalStorageState(STORAGE_KEYS.REST_DURATION, 90);
+  const [defaultDuration, setDefaultDuration] = useLocalStorageState(STORAGE_KEYS.REST_DURATION, "auto");
   const [endAt, setEndAt] = useState(null);
   const [remaining, setRemaining] = useState(0);
   const intervalRef = useRef(null);
