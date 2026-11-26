@@ -169,9 +169,6 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
       <div className="set-rows">
         {rows.map((row, i) => {
           const isSaved = matchesSaved(row);
-          // Fitts's Law: the set that's filled in and waiting to be logged
-          // gets the big, high-contrast button.
-          const isReady = !isSaved && (row.weight !== "" || row.reps !== "") && rows.slice(0, i).every((r) => r.saved);
           return (
             <div className={`set-row${row.saved ? " has-delete" : ""}`} key={row.setNumber}>
               {row.setNumber <= WARMUP_SETS ? (
@@ -200,7 +197,7 @@ export default function ExerciseLogCard({ index, exercise, target, date, day, se
                 <span className="unit">REPS</span>
               </div>
               <button
-                className={`set-log-btn${isSaved ? " done" : ""}${isReady ? " ready" : ""}${prRowIndex === i ? " pr" : ""}`}
+                className={`set-log-btn${isSaved ? " done" : ""}${prRowIndex === i ? " pr" : ""}`}
                 onClick={() => handleSave(i)}
                 disabled={row.weight === "" && row.reps === ""}
                 aria-label={`Log set ${row.setNumber}`}

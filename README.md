@@ -41,24 +41,15 @@ soft shadows, black pill buttons, and a floating white pill bottom nav.
   meals grouped by type with an "Add food" button, and one trend chart with a
   Calories / Protein toggle.
 
-## UX Laws Applied
+## UX Touches
 
-- **Hick's Law** — the rest timer has 4 choices (Auto / 60 / 120 / 180s), not 6.
-- **Fitts's Law** — the set that is filled in and waiting to be logged gets a
-  big black ✓ button; delete, ±15s, skip and week-nav targets are 44px+.
-- **Jakob's Law** — familiar patterns: bottom tab bar, bottom sheets, a
-  settings icon top right, a ✓ to log a set.
-- **Miller's Law** — information is chunked: 3 tabs, 4 macro tiles, 4 timer
-  presets, finished exercises fold to one line.
-- **Tesler's Law** — complexity is absorbed for the user: reps pre-filled
-  with 15, the next set copies the weight you just logged, rest time follows
-  the day's plan.
-- **Aesthetic-Usability** — one calm, consistent visual system (soft cards,
-  pill buttons, one accent).
-- **Peak-End Rule** — finishing the last exercise turns the hero into a
+- **Fewer choices** — the rest timer has 4 options (Auto / 60 / 120 / 180s).
+- **Less typing** — reps pre-filled with 15, and logging a set copies its
+  weight into the next untouched set.
+- **A good ending** — finishing the last exercise turns the hero into a
   "Workout complete" summary (sets, kg lifted, PRs) with a small celebration.
-- **Doherty Threshold** — a skeleton screen shows instantly while the saved
-  session loads, and every tap has immediate visual feedback.
+- **No blank screens** — a skeleton shows instantly while the saved session
+  loads.
 
 ## Features
 

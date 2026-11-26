@@ -1901,57 +1901,6 @@ input::placeholder, textarea::placeholder {
 
 /* --- UX laws --- */
 
-/* Fitts's Law: the set that's ready to log is the biggest, darkest target. */
-.set-log-btn {
-  width: 48px;
-  height: 48px;
-}
-
-.set-row {
-  grid-template-columns: 28px 1fr 1fr 48px;
-}
-
-.set-row.has-delete {
-  grid-template-columns: 28px 1fr 1fr 48px 40px;
-}
-
-.set-log-btn.ready {
-  background: var(--accent);
-  border-color: var(--accent);
-  box-shadow: 0 6px 16px var(--accent-glow);
-}
-
-.set-log-btn.ready svg {
-  color: var(--on-accent);
-}
-
-.set-delete-btn {
-  width: 40px;
-  height: 48px;
-}
-
-.rest-timer-adjust,
-.rest-timer-skip {
-  height: 44px;
-}
-
-.rest-timer-skip {
-  width: 44px;
-}
-
-.rest-timer-adjust {
-  min-width: 56px;
-}
-
-.week-nav button {
-  width: 44px;
-  height: 44px;
-}
-
-.chip {
-  min-height: 40px;
-}
-
 /* Peak-End Rule: a finishing moment worth remembering. */
 .hero-stats {
   display: grid;
@@ -2020,14 +1969,6 @@ input::placeholder, textarea::placeholder {
 
 @keyframes shimmer {
   to { background-position: -200% 0; }
-}
-
-/* Instant feedback on every tap. */
-.exercise-card-head:active,
-.exercise-action:active,
-.pill-btn:active,
-.chip:active {
-  transform: scale(0.97);
 }
 
 @media (prefers-reduced-motion: reduce) {
