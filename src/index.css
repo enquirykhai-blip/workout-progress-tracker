@@ -2450,3 +2450,267 @@ input::placeholder, textarea::placeholder {
 .exercise-action {
   white-space: nowrap;
 }
+
+/* ===================== Micro-interactions ===================== */
+
+/* Tap ripple (spawned by utils/motion.js). */
+.btn,
+.hero-dark-cta,
+.hero-dark-swap,
+.exercise-action,
+.pill-btn,
+.chip,
+.picker-option,
+.set-log-btn,
+.focus-skip,
+.focus-adjust,
+.ex-head,
+.nav-item,
+.guide-toggle,
+.segmented button,
+.week-nav button,
+.empty-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+  animation: ripple 0.6s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+@keyframes ripple {
+  0% { transform: scale(0); opacity: 0.18; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+/* Press feedback on surfaces that didn't have it. */
+.exercise-action,
+.pill-btn,
+.chip,
+.picker-option,
+.hero-dark-swap,
+.week-nav button,
+.set-log-btn {
+  transition: transform 0.15s ease, background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.exercise-action:active,
+.pill-btn:active,
+.chip:active,
+.hero-dark-swap:active,
+.week-nav button:active,
+.set-log-btn:active {
+  transform: scale(0.93);
+}
+
+.picker-option:active,
+.ex-head:active {
+  transform: scale(0.985);
+}
+
+.ex-head {
+  transition: transform 0.15s ease;
+}
+
+/* Logging a set: the box fills, the check draws itself, a ring pulses out. */
+.set-log-btn.done {
+  animation: log-fill 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), log-burst 0.6s ease-out;
+}
+
+.set-log-btn.done svg path {
+  stroke-dasharray: 1;
+  animation: check-draw 0.4s cubic-bezier(0.65, 0, 0.35, 1) 0.06s both;
+}
+
+@keyframes log-fill {
+  0% { transform: scale(0.8); }
+  60% { transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+@keyframes log-burst {
+  0% { box-shadow: 0 0 0 0 rgba(17, 17, 17, 0.35); }
+  100% { box-shadow: 0 0 0 12px rgba(17, 17, 17, 0); }
+}
+
+@keyframes check-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Exercise header pieces settle in with a spring. */
+.ex-dot.on {
+  animation: dot-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes dot-pop {
+  0% { transform: scale(0.2); }
+  60% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+}
+
+.ex-index.done svg path {
+  stroke-dasharray: 1;
+  animation: check-draw 0.4s cubic-bezier(0.65, 0, 0.35, 1) both;
+}
+
+.ex-chevron {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.ex-body {
+  animation: ex-open 0.38s cubic-bezier(0.32, 0.72, 0, 1);
+  transform-origin: top center;
+}
+
+@keyframes ex-open {
+  from { opacity: 0; transform: translateY(-8px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Screens slide in from the direction of the tab you tapped. */
+.app-shell[data-dir="fwd"] .screen {
+  animation: screen-in-fwd 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.app-shell[data-dir="back"] .screen {
+  animation: screen-in-back 0.42s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@keyframes screen-in-fwd {
+  from { opacity: 0; transform: translateX(28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes screen-in-back {
+  from { opacity: 0; transform: translateX(-28px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* Lists cascade in. */
+.ex-list > *,
+.schedule-row,
+.meal-group,
+.tile-row > *,
+.macro-grid > * {
+  animation: list-in 0.5s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+.ex-list > :nth-child(2),
+.schedule-row:nth-child(2),
+.meal-group:nth-of-type(2),
+.tile-row > :nth-child(2),
+.macro-grid > :nth-child(2) { animation-delay: 0.04s; }
+.ex-list > :nth-child(3),
+.schedule-row:nth-child(3),
+.meal-group:nth-of-type(3),
+.macro-grid > :nth-child(3) { animation-delay: 0.08s; }
+.ex-list > :nth-child(4),
+.schedule-row:nth-child(4),
+.meal-group:nth-of-type(4),
+.macro-grid > :nth-child(4) { animation-delay: 0.12s; }
+.ex-list > :nth-child(5),
+.schedule-row:nth-child(5) { animation-delay: 0.16s; }
+.ex-list > :nth-child(6),
+.schedule-row:nth-child(6) { animation-delay: 0.2s; }
+.ex-list > :nth-child(n + 7),
+.schedule-row:nth-child(n + 7) { animation-delay: 0.24s; }
+
+@keyframes list-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Hero card + its button breathe in. */
+.hero-dark {
+  animation: hero-in 0.55s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes hero-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Bottom sheets rise with a spring over a softly blurred backdrop. */
+.sheet {
+  animation: sheet-in 0.5s cubic-bezier(0.32, 1.06, 0.5, 1);
+  padding-bottom: 12px;
+  margin-bottom: -12px;
+}
+
+.sheet-backdrop {
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.picker-option .checkbox.checked {
+  animation: dot-pop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* PR toast: a highlight sweeps across it. */
+.pr-toast {
+  position: relative;
+  overflow: hidden;
+}
+
+.pr-toast::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, rgba(255, 255, 255, 0.45) 50%, transparent 80%);
+  transform: translateX(-120%);
+  animation: shine 1s ease 0.25s;
+}
+
+@keyframes shine {
+  to { transform: translateX(120%); }
+}
+
+/* Settings button spins a touch when opened. */
+.account-fab {
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.account-fab:active {
+  transform: scale(0.9) rotate(-20deg);
+}
+
+.account-popover {
+  transform-origin: top right;
+  animation: pop-in 0.32s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: scale(0.9) translateY(-6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ripple {
+    display: none;
+  }
+  .set-log-btn.done,
+  .set-log-btn.done svg path,
+  .ex-index.done svg path,
+  .ex-dot.on,
+  .ex-body,
+  .app-shell .screen,
+  .ex-list > *,
+  .schedule-row,
+  .meal-group,
+  .tile-row > *,
+  .macro-grid > *,
+  .hero-dark,
+  .sheet,
+  .picker-option .checkbox.checked,
+  .pr-toast::after,
+  .account-popover {
+    animation: none !important;
+  }
+}

@@ -51,6 +51,18 @@ swaps to a filled icon with a pop and reveals its label.
   meals grouped by type with an "Add food" button, and one trend chart with a
   Calories / Protein toggle.
 
+## Motion
+
+Every pressable surface gets a soft ripple from the tap point
+(`src/utils/motion.js`, one delegated listener), plus a press-scale.
+Logging a set fills the ✓ box with a spring, draws the check and pulses a
+ring; set dots pop. Screens slide in from the side of the tab you tapped,
+lists (exercises, schedule, meals, macro tiles) cascade in, progress rings
+sweep up from empty, sheets rise with a light spring over a blurred
+backdrop, and the PR toast gets a shine. Android phones also get a tiny
+haptic tick on tab changes and logged sets. All of it is switched off under
+"reduce motion".
+
 ## UX Touches
 
 - **Fewer choices** — the rest timer has 4 options (Auto / 60 / 120 / 180s).

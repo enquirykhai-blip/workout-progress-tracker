@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { todayISO, formatDisplayDate, formatShortDate } from "../utils/date";
 import { makeId } from "../utils/id";
@@ -17,11 +17,22 @@ import Sheet from "../components/Sheet";
 
 const DEFAULT_TARGETS = { calories: 2200, protein: 150, carbs: 250, fat: 70, fiber: 30 };
 
+// Rings start empty and sweep to their value on first paint.
+function useEntered() {
+  const [entered, setEntered] = useState(false);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => requestAnimationFrame(() => setEntered(true)));
+    return () => cancelAnimationFrame(id);
+  }, []);
+  return entered;
+}
+
 function ProgressRing({ value, target, size = 104, stroke = 10, color = "var(--accent)" }) {
+  const entered = useEntered();
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const pct = target > 0 ? Math.min(value / target, 1) : 0;
-  const offset = circumference * (1 - pct);
+  const offset = circumference * (1 - (entered ? pct : 0));
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="var(--surface-raised)" strokeWidth={stroke} />
@@ -36,13 +47,15 @@ function ProgressRing({ value, target, size = 104, stroke = 10, color = "var(--a
         strokeDasharray={circumference}
         strokeDashoffset={offset}
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        style={{ transition: "stroke-dashoffset 0.4s ease" }}
+        style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.32, 0.72, 0, 1)" }}
       />
     </svg>
   );
 }
 
 function MacroPill({ label, value, target }) {
+  const entered = useEntered();
+  const pct = entered && target > 0 ? Math.min(value / target, 1) : 0;
   return (
     <div className="macro-pill">
       <div className="macro-pill-icon">
@@ -57,7 +70,8 @@ function MacroPill({ label, value, target }) {
             strokeWidth="4"
             strokeLinecap="round"
             strokeDasharray={2 * Math.PI * 15}
-            strokeDashoffset={2 * Math.PI * 15 * (1 - (target > 0 ? Math.min(value / target, 1) : 0))}
+            strokeDashoffset={2 * Math.PI * 15 * (1 - pct)}
+            style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.32, 0.72, 0, 1) 0.15s" }}
             transform="rotate(-90 18 18)"
           />
         </svg>
